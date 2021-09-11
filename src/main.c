@@ -15,6 +15,7 @@
 #include <lvgl.h>
 
 
+
 #define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
 BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
         "No default LoRa radio specified in DT");
@@ -26,7 +27,7 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 #define LORAWAN_APP_KEY   { 0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C }
 
 
-#define DELAY K_MSEC(10000)
+#define DELAY K_MSEC(5000)
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <logging/log.h>
@@ -63,7 +64,13 @@ const struct device *dev_sht3xd;
 const struct device *dev_bme280;
 
 float alphasensor[8];
-char results[7*sizeof(float)];
+// 7 16bit floats
+// 8 16bit bytes
+char results[7*sizeof(float)+4];
+char voltages[8*sizeof(float)+4];
+
+
+
 char arr[4];
 
 struct sensor_value temp, hum, press;
@@ -79,6 +86,7 @@ lv_obj_t *so2_label;
 lv_obj_t *o3_label;
 
 void convertToBytes(char* array, float f) {
+    //printk("Converting: %x\n",f);
     unsigned char *b = (unsigned char *) &f;
     for (int x = 0; x < 4; x++) {
         //printk("%x:", b[x]);
@@ -127,13 +135,15 @@ void querySensors() {
     lv_task_handler();
     
     convertToBytes(arr, sensor_value_to_double(&hum));
-    memcpy(results+16,arr,4);
-    
-    convertToBytes(arr, sensor_value_to_double(&temp));
     memcpy(results+20,arr,4);
     
+    convertToBytes(arr, sensor_value_to_double(&temp));
+    memcpy(results+24,arr,4);
+    
     convertToBytes(arr, sensor_value_to_double(&press));
-    memcpy(results+24,arr,4);    
+    memcpy(results+28,arr,4);
+    
+    
 }
 
 void queryAlphasensors() {
@@ -185,7 +195,7 @@ void queryAlphasensors() {
 
             alphasensor[i] = reading * voltageConv;
 
-            printk("Reading Alphasensor[%d]: %.2f\n", i, alphasensor[i]);
+            //printk("Reading Alphasensor[%d]: %.2f\n", i, alphasensor[i]);
         }
         k_msleep(50);
 
@@ -223,7 +233,7 @@ void queryAlphasensors() {
 
             alphasensor[i + 4] = reading * voltageConv;
 
-            printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
+            //printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
         }
 
 
@@ -232,15 +242,19 @@ void queryAlphasensors() {
         float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
         float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
         float o3 = o3no2 - no2;
-
-
-        snprintfcb(no2_str,40, "NO2: %0.2f",no2);
+        
+        float f;
+        
+        f = no2;
+        snprintfcb(no2_str,40, "NO2: %0.2f",f);
         lv_label_set_text(no2_label, no2_str);
-
-        snprintfcb(so2_str, 40, "SO2: %0.2f",so2);
+        
+        f = so2;
+        snprintfcb(so2_str, 40, "SO2: %0.2f",f);
         lv_label_set_text(so2_label, so2_str);
-
-        snprintfcb(o3_str, 40, "O3: %0.2f",(o3));
+        
+        f = o3;
+        snprintfcb(o3_str, 40, "O3: %0.2f",(f));
         lv_label_set_text(o3_label, o3_str);
 
         lv_task_handler();
@@ -248,13 +262,22 @@ void queryAlphasensors() {
         
         
         convertToBytes(arr, no2);
-        memcpy(results,arr,4);
+        memcpy(results+4,arr,4);
         convertToBytes(arr, so2);
-        memcpy(results+4,arr,4);        
+        memcpy(results+8,arr,4);        
         convertToBytes(arr, o3);
-        memcpy(results+8,arr,4);          
+        memcpy(results+12,arr,4);          
         convertToBytes(arr, 0.0);
-        memcpy(results+12,arr,4);   
+        memcpy(results+16,arr,4);   
+        
+        
+        int c=4;
+        for (int i=0; i<8; i++) {
+           convertToBytes(arr, alphasensor[i]);
+           memcpy(voltages+c,arr,4);
+           c=c+4;
+        }
+        
 
 
         
@@ -305,6 +328,9 @@ static const struct device *get_sht3xd_device(void)
 
 
 void main(void) {
+    
+    results[0] = 0x00;
+    voltages[0] = 0x01;
 
     dev_sht3xd = get_sht3xd_device();
     if (dev_sht3xd == NULL) {
@@ -484,7 +510,7 @@ void main(void) {
         lv_task_handler();
 
 
-        printk("\n*-*-*- Data: *-*-*-*-\n");
+        printk("\n*-*-*- Sensor Data: *-*-*-*-\n");
         for (int i = 0; i < sizeof(results); i++) {
             printk("%x:", results[i]);
         }
@@ -509,8 +535,44 @@ void main(void) {
             //return;
             k_sleep(K_MSEC(5000));
         }
+        if (ret > 0) {
+            LOG_INF("Sensor Data sent!");
+        }
+        
+        k_sleep(K_MSEC(5000));
+        
+        printk("\n*-*-*- Voltage Data: *-*-*-*-\n");
+        for (int i = 0; i < sizeof(voltages); i++) {
+            printk("%x:", voltages[i]);
+        }
+        printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
 
-        LOG_INF("Data sent!");
+        ret = lorawan_send(1, voltages, sizeof (voltages), LORAWAN_MSG_CONFIRMED);
+
+        /*
+         * Note: The stack may return -EAGAIN if the provided data
+         * length exceeds the maximum possible one for the region and
+         * datarate. But since we are just sending the same data here,
+         * we'll just continue.
+         */
+        if (ret == -EAGAIN) {
+            LOG_ERR("lorawan_send failed: %d. Continuing...", ret);
+            k_sleep(DELAY);
+            continue;
+        }
+
+        if (ret < 0) {
+            LOG_ERR("lorawan_send failed: %d", ret);
+            //return;
+            k_sleep(K_MSEC(5000));
+        }
+
+        if (ret > 0) {
+            LOG_INF("Voltage Data sent!");
+        }
+        
+        
+        
         lv_task_handler();
         k_sleep(DELAY);
     }
