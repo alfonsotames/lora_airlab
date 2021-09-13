@@ -38,8 +38,9 @@ char data[] = {'m', 'u', 'f', 'u', 'f', 'u'};
 static void dl_callback(uint8_t port, bool data_pending,
         int16_t rssi, int8_t snr,
         uint8_t len, const uint8_t *data) {
-    LOG_INF("Port %d, Pending %d, RSSI %ddB, SNR %ddBm", port, data_pending, rssi, snr);
+    LOG_INF("Downlink Callback: Port %d, Pending %d, RSSI %ddB, SNR %ddBm", port, data_pending, rssi, snr);
     if (data) {
+        LOG_INF("IT CONTAINS DATA !!!!!!!!!!!!!!!");
         LOG_HEXDUMP_INF(data, len, "Payload: ");
     }
 }
@@ -233,14 +234,19 @@ void queryAlphasensors() {
 
             alphasensor[i + 4] = reading * voltageConv;
 
-            //printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
+            printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
         }
 
+        //********* Remover cuando se integre el sensor de CO2 !!!!! *********
+        alphasensor[6] = 0;
+        alphasensor[7] = 0;
+        
 
 
         float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
         float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
         float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
+        
         float o3 = o3no2 - no2;
         
         float f;
@@ -516,7 +522,7 @@ void main(void) {
         }
         printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
 
-        ret = lorawan_send(2, results, sizeof (results), LORAWAN_MSG_CONFIRMED);
+        ret = lorawan_send(1, results, sizeof (results), LORAWAN_MSG_CONFIRMED);
 
         /*
          * Note: The stack may return -EAGAIN if the provided data
@@ -535,11 +541,11 @@ void main(void) {
             //return;
             k_sleep(K_MSEC(5000));
         }
-        if (ret > 0) {
+        if (ret == 0) {
             LOG_INF("Sensor Data sent!");
         }
         
-        k_sleep(K_MSEC(5000));
+        k_sleep(K_MSEC(60000));
         
         printk("\n*-*-*- Voltage Data: *-*-*-*-\n");
         for (int i = 0; i < sizeof(voltages); i++) {
@@ -547,7 +553,7 @@ void main(void) {
         }
         printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
 
-        ret = lorawan_send(1, voltages, sizeof (voltages), LORAWAN_MSG_CONFIRMED);
+        ret = lorawan_send(2, voltages, sizeof (voltages), LORAWAN_MSG_CONFIRMED);
 
         /*
          * Note: The stack may return -EAGAIN if the provided data
@@ -564,16 +570,16 @@ void main(void) {
         if (ret < 0) {
             LOG_ERR("lorawan_send failed: %d", ret);
             //return;
-            k_sleep(K_MSEC(5000));
+            k_sleep(K_MSEC(60000));
         }
 
-        if (ret > 0) {
+        if (ret == 0) {
             LOG_INF("Voltage Data sent!");
         }
         
         
         
         lv_task_handler();
-        k_sleep(DELAY);
+        k_sleep(K_MSEC(5000));
     }
 }
