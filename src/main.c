@@ -83,11 +83,12 @@ static const char *format_time(time_t time,
 
 const float voltageConv = 6114 / 32768.0;
 
-//const struct device *i2c2_dev;
+
 const struct device *i2c3_dev;
 
 const struct device *dev_sht3xd;
 const struct device *dev_bme280;
+const struct device *dev_ds3231;
 
 float alphasensor[8];
 float voltages[8];
@@ -114,6 +115,7 @@ struct sensor_value temp, hum, press;
 
 
 lv_obj_t *title_label;
+lv_obj_t *table;
 
 /*
 lv_obj_t *humidity_label;
@@ -132,6 +134,8 @@ void convertToBytes(char* array, float f) {
         array[x] = b[x];
     }
 }
+
+
 
 void query_ambient_sensors() {
 
@@ -261,12 +265,34 @@ void query_alphasensors() {
 
 }
 
+
+
+
+static const struct device *get_ds3231_device(void) {
+    const struct device *dev = device_get_binding("DS3231");
+	
+    if (dev == NULL) {
+        /* No such node, or the node does not have status "okay". */
+        printk("\nError: no device DS3231 found.\n");
+        return NULL;
+    }
+    
+    if (!device_is_ready(dev)) {
+        printk("\nError: Device \"%s\" is not ready; "
+                "check the driver initialization logs for errors.\n",
+                dev->name);
+        return NULL;
+    }
+
+    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    return dev;
+}        
 static const struct device *get_bme280_device(void) {
     const struct device *dev = device_get_binding("BME280");
 
     if (dev == NULL) {
         /* No such node, or the node does not have status "okay". */
-        printk("\nError: no device found.\n");
+        printk("\nError: no device BME280 found.\n");
         return NULL;
     }
 
@@ -286,7 +312,7 @@ static const struct device *get_sht3xd_device(void) {
 
     if (dev == NULL) {
         /* No such node, or the node does not have status "okay". */
-        printk("\nError: no device found.\n");
+        printk("\nError: no device SHT3XD found.\n");
         return NULL;
     }
 
@@ -301,7 +327,12 @@ static const struct device *get_sht3xd_device(void) {
     return dev;
 }
 
-void take_a_reading(void) {
+K_THREAD_STACK_DEFINE(my_stack_area, STACKSIZE);
+struct k_thread my_thread_data;
+
+
+
+extern void take_a_reading() {
 
     char humidity_str[40] = {0};
     char temperat_str[40] = {0};
@@ -318,7 +349,16 @@ void take_a_reading(void) {
 
         query_alphasensors();
         query_ambient_sensors();
-
+        
+        
+        
+        snprintfcb(temperat_str, 40, "%0.2f", ambientsensor[1]);
+        lv_table_set_cell_value(table, 1, 1, temperat_str);
+        
+        snprintfcb(humidity_str, 40, "%0.2f", ambientsensor[0]);
+        lv_table_set_cell_value(table, 2, 1, humidity_str);        
+        
+        
 
         for (int n = 0; n < 8; n++) {
             voltages_table[n][c] = voltages[n];
@@ -330,12 +370,33 @@ void take_a_reading(void) {
         if (c == readings) {
             printk("Doing calculations...\n");
             c = 0;
+            
+            /* GET TIME */
+
+            uint32_t syncclock_Hz = maxim_ds3231_syncclock_frequency(dev_ds3231);
+            uint32_t syncclock = maxim_ds3231_read_syncclock(dev_ds3231);
+            uint32_t now = 0;
+            int rc = counter_get_value(dev_ds3231, &now);
+
+            struct maxim_ds3231_syncpoint sp = {
+                .rtc =
+                {
+                    .tv_sec = now,
+                    .tv_nsec = (uint64_t) NSEC_PER_SEC * syncclock / syncclock_Hz,
+                },
+                .syncclock = syncclock,
+            };
+            printk("%s at %u ms past: %d\n", format_time(sp.rtc.tv_sec, sp.rtc.tv_nsec), syncclock, rc);
+
+
+            
+            
             for (int r = 0; r < readings - 1; r++) {
                 for (int i = 0; i < 8; i++) {
                     alphasensor[i] = alphasensor[i] + voltages_table[i][r];
                 }
                 for (int i = 0; i < 3; i++) {
-                    ambientsensor[i] = ambientsensor[i] = ambientsensor_table[i][r];
+                    ambientsensor[i] = ambientsensor[i] + ambientsensor_table[i][r];
                 }
             }
 
@@ -359,6 +420,7 @@ void take_a_reading(void) {
             f = no2;
             snprintfcb(no2_str, 40, "NO2: %0.2f", f);
             //lv_label_set_text(no2_label, no2_str);
+            
 
             f = so2;
             snprintfcb(so2_str, 40, "SO2: %0.2f", f);
@@ -370,12 +432,17 @@ void take_a_reading(void) {
 
             snprintfcb(humidity_str, 40, "H(%%): %0.2f", sensor_value_to_double(&hum));
             //lv_label_set_text(humidity_label, humidity_str);
+            //lv_table_set_cell_value(table, 1, 2, humidity_str);
 
-            snprintfcb(temperat_str, 40, "T(c): %0.2f", sensor_value_to_double(&temp));
+            snprintfcb(temperat_str, 40, "%0.2f", ambientsensor[1]);
             //lv_label_set_text(temperat_label, temperat_str);
+            
+            
+            lv_table_set_cell_value(table, 1, 2, temperat_str);
 
             snprintfcb(press_str, 40, "P(Kpa): %0.2f", sensor_value_to_double(&press));
             //lv_label_set_text(press_label, press_str);
+            //lv_table_set_cell_value(table, 1, 3, press_str);
 
 
         }
@@ -518,6 +585,11 @@ void main(void) {
     if (dev_bme280 == NULL) {
         return;
     }
+    
+    dev_ds3231 = get_ds3231_device();
+    if (dev_ds3231 == NULL) {
+        return;
+    }
 
 
 
@@ -563,6 +635,7 @@ void main(void) {
     static lv_style_t screenStyle1;
     static lv_style_t style1;
     static lv_style_t data_style;
+    
 
     lv_style_init(&screenStyle1);
     lv_style_init(&style1);
@@ -572,7 +645,7 @@ void main(void) {
     lv_style_set_text_font(&style1, LV_STATE_DEFAULT, &lv_font_montserrat_24);
     lv_style_set_text_color(&style1, LV_STATE_DEFAULT, LV_COLOR_WHITE);
 
-    lv_style_set_text_font(&data_style, LV_STATE_DEFAULT, &lv_font_montserrat_20);
+    lv_style_set_text_font(&data_style, LV_STATE_DEFAULT, &lv_font_montserrat_16);
     lv_style_set_text_color(&data_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
 
     lv_obj_t *screen1;
@@ -581,6 +654,121 @@ void main(void) {
 
     title_label = lv_label_create(screen1, NULL);
     lv_obj_add_style(title_label, LV_OBJ_PART_MAIN, &style1);
+    
+    
+    /*Create a Table */
+    
+    table = lv_table_create(screen1, NULL);
+    
+    static lv_style_t table_style;
+    lv_style_init(&table_style);
+    lv_style_set_pad_top(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_pad_bottom(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_text_line_space(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_border_width(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_pad_left(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_pad_right(&table_style, LV_STATE_DEFAULT, 0);
+    lv_style_set_text_letter_space(&table_style, LV_STATE_DEFAULT, 0);
+    
+    lv_style_set_pad_top(&table_style, LV_TABLE_PART_CELL1, 0);
+    lv_style_set_pad_bottom(&table_style, LV_TABLE_PART_CELL1, 0);
+    
+    lv_style_set_pad_top(&table_style, LV_TABLE_PART_CELL2, 0);
+    lv_style_set_pad_bottom(&table_style, LV_TABLE_PART_CELL2, 0);
+    
+    lv_style_set_pad_top(&table_style, LV_TABLE_PART_CELL3, 0);
+    lv_style_set_pad_bottom(&table_style, LV_TABLE_PART_CELL3, 0);
+    
+    lv_style_set_pad_top(&table_style, LV_TABLE_PART_CELL4, 0);
+    lv_style_set_pad_bottom(&table_style, LV_TABLE_PART_CELL4, 0);
+    
+    lv_style_set_text_letter_space(&table_style, LV_TABLE_PART_CELL1, 0);
+    lv_style_set_text_letter_space(&table_style, LV_TABLE_PART_CELL2, 0);
+    lv_style_set_text_letter_space(&table_style, LV_TABLE_PART_CELL3, 0);
+    lv_style_set_text_letter_space(&table_style, LV_TABLE_PART_CELL4, 0);
+
+    lv_style_set_border_width(&table_style, LV_TABLE_PART_CELL1, 0);
+    lv_style_set_border_width(&table_style, LV_TABLE_PART_CELL2, 0);
+    lv_style_set_border_width(&table_style, LV_TABLE_PART_CELL3, 0);
+    lv_style_set_border_width(&table_style, LV_TABLE_PART_CELL4, 0);
+    
+    lv_style_set_text_line_space(&table_style, LV_TABLE_PART_CELL1, 0);
+    lv_style_set_text_line_space(&table_style, LV_TABLE_PART_CELL2, 0);
+    lv_style_set_text_line_space(&table_style, LV_TABLE_PART_CELL3, 0);
+    lv_style_set_text_line_space(&table_style, LV_TABLE_PART_CELL4, 0);
+    
+    
+    lv_style_set_text_color(&table_style, LV_TABLE_PART_BG, LV_COLOR_RED);
+   
+    
+    
+    lv_style_set_bg_color(&table_style, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+    lv_obj_add_style(table, LV_TABLE_PART_BG, &table_style);
+    lv_obj_add_style(table, LV_TABLE_PART_CELL1, &data_style);
+    
+
+    
+    
+    lv_table_set_col_cnt(table, 3);
+    lv_table_set_row_cnt(table, 7);
+    
+    lv_table_set_cell_type(table, 1, 0, 1);
+    lv_table_set_cell_type(table, 1, 1, 1);
+    lv_table_set_cell_type(table, 1, 2, 1);
+    
+    //lv_obj_align(table, NULL, LV_ALIGN_CENTER, 0, 0);
+    
+    
+
+    /*Make the cells of the first row center aligned */
+    //lv_table_set_cell_align(table, 0, 0, LV_LABEL_ALIGN_CENTER);
+    //lv_table_set_cell_align(table, 0, 1, LV_LABEL_ALIGN_CENTER);
+
+    /*Align the price values to the right in the 2nd column*/
+    //lv_table_set_cell_align(table, 1, 1, LV_LABEL_ALIGN_RIGHT);
+    //lv_table_set_cell_align(table, 2, 1, LV_LABEL_ALIGN_RIGHT);
+    //lv_table_set_cell_align(table, 3, 1, LV_LABEL_ALIGN_RIGHT);
+
+    lv_table_set_col_width(table, 0,70);
+    lv_table_set_col_width(table, 1,70);
+    lv_table_set_col_width(table, 2,70);
+    
+
+    
+    
+    
+    
+
+
+
+    lv_table_set_cell_value(table, 0, 0, "N");
+    lv_table_set_cell_value(table, 0, 1, "RT");
+    lv_table_set_cell_value(table, 0, 2, "AVG");
+    lv_table_set_cell_value(table, 1, 0, "T");
+    lv_table_set_cell_value(table, 2, 0, "HR");
+    lv_table_set_cell_value(table, 3, 0, "P");
+    lv_table_set_cell_value(table, 4, 0, "NO2");
+    lv_table_set_cell_value(table, 5, 0, "SO2");
+    lv_table_set_cell_value(table, 6, 0, "O3");
+    
+    
+
+
+    
+
+
+    
+    /*
+    for (int row=2; row < 8; row++) {
+        for (int col=2; col <3; col++) {
+            lv_table_set_cell_value(table, col, row, "0");
+        }
+    }
+*/
+    lv_table_ext_t * ext = lv_obj_get_ext_attr(table);
+    ext->row_h[0] = 20;
+    
+    
     /*
     
     humidity_label = lv_label_create(screen1, NULL);
@@ -615,17 +803,23 @@ void main(void) {
     lv_scr_load(screen1);
     lv_task_handler();
     display_blanking_off(display_dev);
+    
+    
+    k_thread_create(&my_thread_data, my_stack_area,
+                                 K_THREAD_STACK_SIZEOF(my_stack_area),
+                                 take_a_reading,
+                                 NULL, NULL, NULL,
+                                 5, 0, K_NO_WAIT);
 
+    
 
-    query_alphasensors();
-    query_ambient_sensors();
-
+/*
     printk("\n*-*-*- Data: *-*-*-*-\n");
     for (int i = 0; i < sizeof (results_data); i++) {
         printk("%x:", results_data[i]);
     }
     printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
-
+*/
 
     while (1) {
         lv_task_handler();
@@ -636,5 +830,3 @@ void main(void) {
 
 
 
-K_THREAD_DEFINE(take_a_reading_id, STACKSIZE, take_a_reading, NULL, NULL, NULL, 7, 0, 0);
-//K_THREAD_DEFINE(btn_monitor_id, STACKSIZE, btn_monitor, NULL, NULL, NULL, 7, 0, 0);
