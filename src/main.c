@@ -12,6 +12,8 @@
 #include <zephyr.h>
 #include <drivers/i2c.h>
 #include <drivers/display.h>
+#include <drivers/rtc/maxim_ds3231.h>
+
 #include <lvgl.h>
 
 
@@ -25,6 +27,10 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 #define LORAWAN_DEV_EUI   { 0x00, 0x80, 0xE1, 0x15, 0x05, 0x00, 0xDD, 0x1F }
 #define LORAWAN_JOIN_EUI  { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
 #define LORAWAN_APP_KEY   { 0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C }
+
+
+/* size of stack area used by each thread */
+#define STACKSIZE 1024
 
 
 #define DELAY K_MSEC(5000)
@@ -52,6 +58,25 @@ static void lorwan_datarate_changed(enum lorawan_datarate dr) {
     LOG_INF("New Datarate: DR_%d, Max Payload %d", dr, max_size);
 }
 
+// Clock Functions and Data Types
+
+static const char *format_time(time_t time,
+        long nsec) {
+    static char buf[64];
+    char *bp = buf;
+    char *const bpe = bp + sizeof (buf);
+    struct tm tv;
+    struct tm *tp = gmtime_r(&time, &tv);
+
+    bp += strftime(bp, bpe - bp, "%Y-%m-%d %H:%M:%S", tp);
+    if (nsec >= 0) {
+        bp += snprintf(bp, bpe - bp, ".%09lu", nsec);
+    }
+    bp += strftime(bp, bpe - bp, " %a %j", tp);
+    return buf;
+}
+
+
 
 
 /* * * * * * * * * GLOBAL VARIABLES * * * * * * * * * * * * */
@@ -65,10 +90,21 @@ const struct device *dev_sht3xd;
 const struct device *dev_bme280;
 
 float alphasensor[8];
+float voltages[8];
+float ambientsensor[3];
+
+#define readings 60
+
+
+float voltages_table[8][readings];
+float ambientsensor_table[3][readings];
+
 // 7 16bit floats
 // 8 16bit bytes
-char results[7*sizeof(float)+4];
-char voltages[8*sizeof(float)+4];
+char results_data[7 * sizeof (float) + 4];
+char voltages_data[8 * sizeof (float) + 4];
+
+
 
 
 
@@ -77,14 +113,16 @@ char arr[4];
 struct sensor_value temp, hum, press;
 
 
-lv_obj_t *hello_world_label;
-lv_obj_t *count_label;
+lv_obj_t *title_label;
+
+/*
 lv_obj_t *humidity_label;
 lv_obj_t *temperat_label;
 lv_obj_t *press_label;
 lv_obj_t *no2_label;
 lv_obj_t *so2_label;
 lv_obj_t *o3_label;
+*/
 
 void convertToBytes(char* array, float f) {
     //printk("Converting: %x\n",f);
@@ -95,362 +133,258 @@ void convertToBytes(char* array, float f) {
     }
 }
 
-void querySensors() {
+void query_ambient_sensors() {
 
-    char humidity_str[40] = {0};
-    char temperat_str[40] = {0};
-    char press_str[40] = {0};
-    
+
+    k_msleep(40);
     int rc = sensor_sample_fetch(dev_sht3xd);
-
+    k_msleep(40);
 
     if (rc == 0) {
-        rc = sensor_channel_get(dev_sht3xd, SENSOR_CHAN_AMBIENT_TEMP,
-                &temp);
+        rc = sensor_channel_get(dev_sht3xd, SENSOR_CHAN_AMBIENT_TEMP, &temp);
     }
     if (rc == 0) {
-        rc = sensor_channel_get(dev_sht3xd, SENSOR_CHAN_HUMIDITY,
-                &hum);
+        rc = sensor_channel_get(dev_sht3xd, SENSOR_CHAN_HUMIDITY, &hum);
     }
     if (rc != 0) {
         printf("SHT3XD: failed: %d\n", rc);
         return;
     }
 
+    k_msleep(40);
     rc = sensor_sample_fetch(dev_bme280);
+    k_msleep(40);
 
     if (rc == 0) {
-        rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_PRESS,
-                &press);
+        rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_PRESS, &press);
+    }
+    if (rc != 0) {
+        printf("BME280: failed: %d\n", rc);
+        return;
     }
 
+    ambientsensor[0] = sensor_value_to_double(&hum);
+    ambientsensor[1] = sensor_value_to_double(&temp);
+    ambientsensor[2] = sensor_value_to_double(&press);
 
-    snprintfcb(humidity_str, 40, "H(%%): %0.2f",sensor_value_to_double(&hum));
-    lv_label_set_text(humidity_label, humidity_str);
-
-    snprintfcb(temperat_str, 40, "T(c): %0.2f",sensor_value_to_double(&temp));
-    lv_label_set_text(temperat_label, temperat_str);
-
-    snprintfcb(press_str, 40, "P(Kpa): %0.2f",sensor_value_to_double(&press));
-    lv_label_set_text(press_label, press_str);
-    lv_task_handler();
-    
-    convertToBytes(arr, sensor_value_to_double(&hum));
-    memcpy(results+20,arr,4);
-    
-    convertToBytes(arr, sensor_value_to_double(&temp));
-    memcpy(results+24,arr,4);
-    
-    convertToBytes(arr, sensor_value_to_double(&press));
-    memcpy(results+28,arr,4);
-    
-    
 }
 
-void queryAlphasensors() {
+void query_alphasensors() {
 
     int ret;
-    
+
     uint8_t cmd[3];
     uint8_t readbuf[2];
     uint16_t reading;
     uint8_t addr;
-    
+
+
+
+    /* * * * * * * * * * * Query Alphasensors * * * * * * * * * * * */
+
+    addr = 0x48;
+    for (int i = 0; i < 4; i++) {
+        cmd[0] = 0x01;
+        switch (i) {
+            case(0):
+                cmd[1] = 0xC1;
+                break;
+            case(1):
+                cmd[1] = 0xD1;
+                break;
+            case(2):
+                cmd[1] = 0xE1;
+                break;
+            case(3):
+                cmd[1] = 0xF1;
+                break;
+        }
+
+        cmd[2] = 0x83;
+        ret = i2c_write(i2c3_dev, cmd, 3, addr);
+        k_msleep(20);
+
+        cmd[0] = 0x00;
+        ret = i2c_write(i2c3_dev, cmd, 1, addr);
+        k_msleep(20);
+
+        ret = i2c_read(i2c3_dev, readbuf, 2, addr);
+        k_msleep(50);
+
+        reading = (readbuf[0] << 8 | readbuf[1]);
+        //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
+
+        alphasensor[i] = reading * voltageConv;
+
+        //printk("Reading Alphasensor[%d]: %.2f\n", i, alphasensor[i]);
+    }
+    k_msleep(50);
+
+    addr = 0x49;
+    for (int i = 0; i < 4; i++) {
+        cmd[0] = 0x01;
+        switch (i) {
+            case(0):
+                cmd[1] = 0xC1;
+                break;
+            case(1):
+                cmd[1] = 0xD1;
+                break;
+            case(2):
+                cmd[1] = 0xE1;
+                break;
+            case(3):
+                cmd[1] = 0xF1;
+                break;
+        }
+
+        cmd[2] = 0x83;
+        ret = i2c_write(i2c3_dev, cmd, 3, addr);
+        k_msleep(20);
+
+        cmd[0] = 0x00;
+        ret = i2c_write(i2c3_dev, cmd, 1, addr);
+        k_msleep(20);
+
+        ret = i2c_read(i2c3_dev, readbuf, 2, addr);
+        k_msleep(50);
+
+        reading = (readbuf[0] << 8 | readbuf[1]);
+        //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
+
+        alphasensor[i + 4] = reading * voltageConv;
+
+        //printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
+    }
+
+
+
+}
+
+static const struct device *get_bme280_device(void) {
+    const struct device *dev = device_get_binding("BME280");
+
+    if (dev == NULL) {
+        /* No such node, or the node does not have status "okay". */
+        printk("\nError: no device found.\n");
+        return NULL;
+    }
+
+    if (!device_is_ready(dev)) {
+        printk("\nError: Device \"%s\" is not ready; "
+                "check the driver initialization logs for errors.\n",
+                dev->name);
+        return NULL;
+    }
+
+    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    return dev;
+}
+
+static const struct device *get_sht3xd_device(void) {
+    const struct device *dev = device_get_binding("SHT3XD");
+
+    if (dev == NULL) {
+        /* No such node, or the node does not have status "okay". */
+        printk("\nError: no device found.\n");
+        return NULL;
+    }
+
+    if (!device_is_ready(dev)) {
+        printk("\nError: Device \"%s\" is not ready; "
+                "check the driver initialization logs for errors.\n",
+                dev->name);
+        return NULL;
+    }
+
+    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    return dev;
+}
+
+void take_a_reading(void) {
+
+    char humidity_str[40] = {0};
+    char temperat_str[40] = {0};
+    char press_str[40] = {0};
     char no2_str[40] = {0};
     char so2_str[40] = {0};
     char o3_str[40] = {0};
 
-        /* * * * * * * * * * * Query Alphasensors * * * * * * * * * * * */
-        
-        addr = 0x48;
-        for (int i = 0; i < 4; i++) {
-            cmd[0] = 0x01;
-            switch (i) {
-                case(0):
-                    cmd[1] = 0xC1;
-                    break;
-                case(1):
-                    cmd[1] = 0xD1;
-                    break;
-                case(2):
-                    cmd[1] = 0xE1;
-                    break;
-                case(3):
-                    cmd[1] = 0xF1;
-                    break;
+    int c = 0;
+
+    while (1) {
+        printk("Reading sensors...%d\n", c);
+        k_msleep(200);
+
+        query_alphasensors();
+        query_ambient_sensors();
+
+
+        for (int n = 0; n < 8; n++) {
+            voltages_table[n][c] = voltages[n];
+        }
+        for (int n = 0; n < 3; n++) {
+            ambientsensor_table[n][c] = ambientsensor[n];
+        }
+        c++;
+        if (c == readings) {
+            printk("Doing calculations...\n");
+            c = 0;
+            for (int r = 0; r < readings - 1; r++) {
+                for (int i = 0; i < 8; i++) {
+                    alphasensor[i] = alphasensor[i] + voltages_table[i][r];
+                }
+                for (int i = 0; i < 3; i++) {
+                    ambientsensor[i] = ambientsensor[i] = ambientsensor_table[i][r];
+                }
             }
 
-            cmd[2] = 0x83;
-            ret = i2c_write(i2c3_dev, cmd, 3, addr);
-            k_msleep(20);
-
-            cmd[0] = 0x00;
-            ret = i2c_write(i2c3_dev, cmd, 1, addr);
-            k_msleep(20);
-
-            ret = i2c_read(i2c3_dev, readbuf, 2, addr);
-            k_msleep(50);
-
-            reading = (readbuf[0] << 8 | readbuf[1]);
-            //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
-
-            alphasensor[i] = reading * voltageConv;
-
-            //printk("Reading Alphasensor[%d]: %.2f\n", i, alphasensor[i]);
-        }
-        k_msleep(50);
-
-        addr = 0x49;
-        for (int i = 0; i < 4; i++) {
-            cmd[0] = 0x01;
-            switch (i) {
-                case(0):
-                    cmd[1] = 0xC1;
-                    break;
-                case(1):
-                    cmd[1] = 0xD1;
-                    break;
-                case(2):
-                    cmd[1] = 0xE1;
-                    break;
-                case(3):
-                    cmd[1] = 0xF1;
-                    break;
+            // saca promedios
+            for (int i = 0; i < 8; i++) {
+                alphasensor[i] = (alphasensor[i] / readings);
+            }
+            for (int i = 0; i < 3; i++) {
+                ambientsensor[i] = (ambientsensor[i] / readings);
             }
 
-            cmd[2] = 0x83;
-            ret = i2c_write(i2c3_dev, cmd, 3, addr);
-            k_msleep(20);
+            // guarda los resultados
+            float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
+            float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
+            float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
 
-            cmd[0] = 0x00;
-            ret = i2c_write(i2c3_dev, cmd, 1, addr);
-            k_msleep(20);
+            float o3 = o3no2 - no2;
 
-            ret = i2c_read(i2c3_dev, readbuf, 2, addr);
-            k_msleep(50);
+            float f;
 
-            reading = (readbuf[0] << 8 | readbuf[1]);
-            //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
+            f = no2;
+            snprintfcb(no2_str, 40, "NO2: %0.2f", f);
+            //lv_label_set_text(no2_label, no2_str);
 
-            alphasensor[i + 4] = reading * voltageConv;
+            f = so2;
+            snprintfcb(so2_str, 40, "SO2: %0.2f", f);
+            //lv_label_set_text(so2_label, so2_str);
 
-            printk("Reading Alphasensor[%d]: %.2f\n", i + 4, alphasensor[i + 4]);
+            f = o3;
+            snprintfcb(o3_str, 40, "O3: %0.2f", (f));
+            //lv_label_set_text(o3_label, o3_str);
+
+            snprintfcb(humidity_str, 40, "H(%%): %0.2f", sensor_value_to_double(&hum));
+            //lv_label_set_text(humidity_label, humidity_str);
+
+            snprintfcb(temperat_str, 40, "T(c): %0.2f", sensor_value_to_double(&temp));
+            //lv_label_set_text(temperat_label, temperat_str);
+
+            snprintfcb(press_str, 40, "P(Kpa): %0.2f", sensor_value_to_double(&press));
+            //lv_label_set_text(press_label, press_str);
+
+
         }
-
-        //********* Remover cuando se integre el sensor de CO2 !!!!! *********
-        alphasensor[6] = 0;
-        alphasensor[7] = 0;
-        
-
-
-        float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
-        float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
-        float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
-        
-        float o3 = o3no2 - no2;
-        
-        float f;
-        
-        f = no2;
-        snprintfcb(no2_str,40, "NO2: %0.2f",f);
-        lv_label_set_text(no2_label, no2_str);
-        
-        f = so2;
-        snprintfcb(so2_str, 40, "SO2: %0.2f",f);
-        lv_label_set_text(so2_label, so2_str);
-        
-        f = o3;
-        snprintfcb(o3_str, 40, "O3: %0.2f",(f));
-        lv_label_set_text(o3_label, o3_str);
-
-        lv_task_handler();
-       
-        
-        
-        convertToBytes(arr, no2);
-        memcpy(results+4,arr,4);
-        convertToBytes(arr, so2);
-        memcpy(results+8,arr,4);        
-        convertToBytes(arr, o3);
-        memcpy(results+12,arr,4);          
-        convertToBytes(arr, 0.0);
-        memcpy(results+16,arr,4);   
-        
-        
-        int c=4;
-        for (int i=0; i<8; i++) {
-           convertToBytes(arr, alphasensor[i]);
-           memcpy(voltages+c,arr,4);
-           c=c+4;
-        }
-        
-
-
-        
+    }
 }
 
-
-static const struct device *get_bme280_device(void)
-{
-	const struct device *dev = device_get_binding("BME280");
-
-	if (dev == NULL) {
-		/* No such node, or the node does not have status "okay". */
-		printk("\nError: no device found.\n");
-		return NULL;
-	}
-
-	if (!device_is_ready(dev)) {
-		printk("\nError: Device \"%s\" is not ready; "
-		       "check the driver initialization logs for errors.\n",
-		       dev->name);
-		return NULL;
-	}
-
-	printk("Found device \"%s\", getting sensor data\n", dev->name);
-	return dev;
-}
-
-static const struct device *get_sht3xd_device(void)
-{
-	const struct device *dev = device_get_binding("SHT3XD");
-
-	if (dev == NULL) {
-		/* No such node, or the node does not have status "okay". */
-		printk("\nError: no device found.\n");
-		return NULL;
-	}
-
-	if (!device_is_ready(dev)) {
-		printk("\nError: Device \"%s\" is not ready; "
-		       "check the driver initialization logs for errors.\n",
-		       dev->name);
-		return NULL;
-	}
-
-	printk("Found device \"%s\", getting sensor data\n", dev->name);
-	return dev;
-}
-
-
-void main(void) {
+void update_results() {
     
-    results[0] = 0x00;
-    voltages[0] = 0x01;
-
-    dev_sht3xd = get_sht3xd_device();
-    if (dev_sht3xd == NULL) {
-        return;
-    }
-
-    dev_bme280 = get_bme280_device();
-    if (dev_bme280 == NULL) {
-        return;
-    }
-
     int ret;
-
-
-    /* * * * * * * * * * * * * i2c3 Device * * * * * * * * * * * * * */
-
-
-    uint32_t i2c3_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_MASTER;
-
-    printk("Initializing I2C 3...\n");
-    i2c3_dev = device_get_binding("I2C_3");
-    if (!i2c3_dev) {
-        printk("I2C3: Device driver not found.\n");
-        return;
-    }
-
-    if (i2c_configure(i2c3_dev, i2c3_cfg)) {
-        printk("I2C3 config failed\n");
-    } else {
-        printk("i2c3 configured...\n");
-    }
-
-
-    printk("Size of Float %d\n",sizeof(float));
-    
-
-
-    /* * * * * * * * * * * * * Display * * * * * * * * * * * * * */
-
-
-
-
-    const struct device *display_dev;
-    display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
-    LOG_INF(CONFIG_LVGL_DISPLAY_DEV_NAME);
-    if (display_dev == NULL) {
-        LOG_ERR("device not found.  Aborting test.");
-        return;
-    }
-
-
-
-    static lv_style_t screenStyle1;
-    static lv_style_t style1;
-    static lv_style_t data_style;
-
-    lv_style_init(&screenStyle1);
-    lv_style_init(&style1);
-    lv_style_init(&data_style);
-
-    lv_style_set_bg_color(&screenStyle1, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-    lv_style_set_text_font(&style1, LV_STATE_DEFAULT, &lv_font_montserrat_24);
-    lv_style_set_text_color(&style1, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-
-    lv_style_set_text_font(&data_style, LV_STATE_DEFAULT, &lv_font_montserrat_28);
-    lv_style_set_text_color(&data_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-
-    lv_obj_t *screen1;
-    screen1 = lv_obj_create(NULL, NULL);
-    lv_obj_add_style(screen1, LV_LABEL_PART_MAIN, &screenStyle1);
-
-    hello_world_label = lv_label_create(screen1, NULL);
-    humidity_label = lv_label_create(screen1, NULL);
-    temperat_label = lv_label_create(screen1, NULL);
-    press_label = lv_label_create(screen1, NULL);
-    no2_label = lv_label_create(screen1, NULL);
-    so2_label = lv_label_create(screen1, NULL);
-    o3_label = lv_label_create(screen1, NULL);
-
-    lv_obj_add_style(hello_world_label, LV_OBJ_PART_MAIN, &style1);
-    lv_obj_add_style(humidity_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(temperat_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(press_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(no2_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(so2_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(o3_label, LV_OBJ_PART_MAIN, &data_style);
-
-    lv_obj_align(humidity_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
-    lv_obj_align(temperat_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -20);
-    lv_obj_align(press_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 10);
-    lv_obj_align(no2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 40);
-    lv_obj_align(so2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 70);
-    lv_obj_align(o3_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 100);
-
-    lv_label_set_text(hello_world_label, "AirLab");
-    lv_obj_align(hello_world_label, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
-
-    count_label = lv_label_create(screen1, NULL);
-    lv_obj_align(count_label, NULL, LV_ALIGN_IN_BOTTOM_MID, 0, 0);
-
-    lv_scr_load(screen1);
-    lv_task_handler();
-    display_blanking_off(display_dev);
-
-    
-    queryAlphasensors();
-    querySensors();
-    
-            printk("\n*-*-*- Data: *-*-*-*-\n");
-        for (int i = 0; i < sizeof(results); i++) {
-            printk("%x:", results[i]);
-        }
-        printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
-
     /* * * * * * * * * * * * * LORA * * * * * * * * * * * * * */
 
     const struct device *lora_dev;
@@ -504,25 +438,16 @@ void main(void) {
     }
 
     LOG_INF("Entering Loop...");
-
-
-
-    while (1) {
-
-
-
-        queryAlphasensors();
-        querySensors();
-        lv_task_handler();
-
-
+    
+    while(1) {
+        k_sleep(K_MSEC(10000));
         printk("\n*-*-*- Sensor Data: *-*-*-*-\n");
-        for (int i = 0; i < sizeof(results); i++) {
-            printk("%x:", results[i]);
+        for (int i = 0; i < sizeof (results_data); i++) {
+            printk("%x:", results_data[i]);
         }
         printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
 
-        ret = lorawan_send(1, results, sizeof (results), LORAWAN_MSG_CONFIRMED);
+        ret = lorawan_send(1, results_data, sizeof (results_data), LORAWAN_MSG_CONFIRMED);
 
         /*
          * Note: The stack may return -EAGAIN if the provided data
@@ -533,7 +458,6 @@ void main(void) {
         if (ret == -EAGAIN) {
             LOG_ERR("lorawan_send failed: %d. Continuing...", ret);
             k_sleep(DELAY);
-            continue;
         }
 
         if (ret < 0) {
@@ -544,16 +468,16 @@ void main(void) {
         if (ret == 0) {
             LOG_INF("Sensor Data sent!");
         }
-        
+
         k_sleep(K_MSEC(60000));
-        
+
         printk("\n*-*-*- Voltage Data: *-*-*-*-\n");
-        for (int i = 0; i < sizeof(voltages); i++) {
-            printk("%x:", voltages[i]);
+        for (int i = 0; i < sizeof (voltages_data); i++) {
+            printk("%x:", voltages_data[i]);
         }
         printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
 
-        ret = lorawan_send(2, voltages, sizeof (voltages), LORAWAN_MSG_CONFIRMED);
+        ret = lorawan_send(2, voltages_data, sizeof (voltages_data), LORAWAN_MSG_CONFIRMED);
 
         /*
          * Note: The stack may return -EAGAIN if the provided data
@@ -564,7 +488,7 @@ void main(void) {
         if (ret == -EAGAIN) {
             LOG_ERR("lorawan_send failed: %d. Continuing...", ret);
             k_sleep(DELAY);
-            continue;
+
         }
 
         if (ret < 0) {
@@ -576,10 +500,141 @@ void main(void) {
         if (ret == 0) {
             LOG_INF("Voltage Data sent!");
         }
-        
-        
-        
-        lv_task_handler();
-        k_sleep(K_MSEC(5000));
     }
+
 }
+
+void main(void) {
+
+    results_data[0] = 0x00;
+    voltages_data[0] = 0x01;
+
+    dev_sht3xd = get_sht3xd_device();
+    if (dev_sht3xd == NULL) {
+        return;
+    }
+
+    dev_bme280 = get_bme280_device();
+    if (dev_bme280 == NULL) {
+        return;
+    }
+
+
+
+    /* * * * * * * * * * * * * i2c3 Device * * * * * * * * * * * * * */
+
+
+    uint32_t i2c3_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_MASTER;
+
+    printk("Initializing I2C 3...\n");
+    i2c3_dev = device_get_binding("I2C_3");
+    if (!i2c3_dev) {
+        printk("I2C3: Device driver not found.\n");
+        return;
+    }
+
+    if (i2c_configure(i2c3_dev, i2c3_cfg)) {
+        printk("I2C3 config failed\n");
+    } else {
+        printk("i2c3 configured...\n");
+    }
+
+
+    printk("Size of Float %d\n", sizeof (float));
+
+
+    k_sleep(K_MSEC(3000));
+
+    /* * * * * * * * * * * * * Display * * * * * * * * * * * * * */
+
+
+
+
+    const struct device *display_dev;
+    display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
+    LOG_INF(CONFIG_LVGL_DISPLAY_DEV_NAME);
+    if (display_dev == NULL) {
+        LOG_ERR("device not found.  Aborting test.");
+        return;
+    }
+
+
+
+    static lv_style_t screenStyle1;
+    static lv_style_t style1;
+    static lv_style_t data_style;
+
+    lv_style_init(&screenStyle1);
+    lv_style_init(&style1);
+    lv_style_init(&data_style);
+
+    lv_style_set_bg_color(&screenStyle1, LV_STATE_DEFAULT, LV_COLOR_BLACK);
+    lv_style_set_text_font(&style1, LV_STATE_DEFAULT, &lv_font_montserrat_24);
+    lv_style_set_text_color(&style1, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+
+    lv_style_set_text_font(&data_style, LV_STATE_DEFAULT, &lv_font_montserrat_20);
+    lv_style_set_text_color(&data_style, LV_STATE_DEFAULT, LV_COLOR_WHITE);
+
+    lv_obj_t *screen1;
+    screen1 = lv_obj_create(NULL, NULL);
+    lv_obj_add_style(screen1, LV_LABEL_PART_MAIN, &screenStyle1);
+
+    title_label = lv_label_create(screen1, NULL);
+    lv_obj_add_style(title_label, LV_OBJ_PART_MAIN, &style1);
+    /*
+    
+    humidity_label = lv_label_create(screen1, NULL);
+    temperat_label = lv_label_create(screen1, NULL);
+    press_label = lv_label_create(screen1, NULL);
+    no2_label = lv_label_create(screen1, NULL);
+    so2_label = lv_label_create(screen1, NULL);
+    o3_label = lv_label_create(screen1, NULL);
+ 
+     
+    
+    lv_obj_add_style(humidity_label, LV_OBJ_PART_MAIN, &data_style);
+    lv_obj_add_style(temperat_label, LV_OBJ_PART_MAIN, &data_style);
+    lv_obj_add_style(press_label, LV_OBJ_PART_MAIN, &data_style);
+    lv_obj_add_style(no2_label, LV_OBJ_PART_MAIN, &data_style);
+    lv_obj_add_style(so2_label, LV_OBJ_PART_MAIN, &data_style);
+    lv_obj_add_style(o3_label, LV_OBJ_PART_MAIN, &data_style);
+
+    lv_obj_align(humidity_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
+    lv_obj_align(temperat_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -20);
+    lv_obj_align(press_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 10);
+    lv_obj_align(no2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 40);
+    lv_obj_align(so2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 70);
+    lv_obj_align(o3_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 100);
+    */
+
+    lv_label_set_text(title_label, "AirLab");
+    lv_obj_align(title_label, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);
+
+
+
+    lv_scr_load(screen1);
+    lv_task_handler();
+    display_blanking_off(display_dev);
+
+
+    query_alphasensors();
+    query_ambient_sensors();
+
+    printk("\n*-*-*- Data: *-*-*-*-\n");
+    for (int i = 0; i < sizeof (results_data); i++) {
+        printk("%x:", results_data[i]);
+    }
+    printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
+
+
+    while (1) {
+        lv_task_handler();
+        k_msleep(5);
+    }
+
+}
+
+
+
+K_THREAD_DEFINE(take_a_reading_id, STACKSIZE, take_a_reading, NULL, NULL, NULL, 7, 0, 0);
+//K_THREAD_DEFINE(btn_monitor_id, STACKSIZE, btn_monitor, NULL, NULL, NULL, 7, 0, 0);
