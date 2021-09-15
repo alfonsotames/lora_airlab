@@ -537,6 +537,15 @@ extern void take_a_reading() {
             convertToBytes(array,now);
             memcpy(voltages_data+4,array,4);
             
+
+            // imprime voltajes
+            char mv[40] = {0};
+            for (int i = 0; i < 8; i++) {
+                snprintfcb(mv, 40, "%0.2f", alphasensor[i]);
+                printk("alphasensor[%d]: %s\n", i, mv);
+            }
+        
+            
             int offset=8;
             for (int i=0; i < 8; i++) {
                 convertToBytes(array,alphasensor[i]);
