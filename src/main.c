@@ -30,7 +30,7 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 
 
 /* size of stack area used by each thread */
-#define STACKSIZE 1024
+#define STACKSIZE 2048
 
 
 #define DELAY K_MSEC(5000)
@@ -287,18 +287,18 @@ static const struct device *get_ds3231_device(void) {
 	
     if (dev == NULL) {
         /* No such node, or the node does not have status "okay". */
-        printk("\nError: no device DS3231 found.\n");
+        LOG_ERR("\nError: no device DS3231 found.\n");
         return NULL;
     }
     
     if (!device_is_ready(dev)) {
-        printk("\nError: Device \"%s\" is not ready; "
+        LOG_ERR("\nError: Device \"%s\" is not ready; "
                 "check the driver initialization logs for errors.\n",
                 dev->name);
         return NULL;
     }
 
-    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    LOG_INF("Found device \"%s\", getting sensor data", dev->name);
     return dev;
 }        
 static const struct device *get_bme280_device(void) {
@@ -306,18 +306,18 @@ static const struct device *get_bme280_device(void) {
 
     if (dev == NULL) {
         /* No such node, or the node does not have status "okay". */
-        printk("\nError: no device BME280 found.\n");
+        LOG_ERR("\nError: no device BME280 found.\n");
         return NULL;
     }
 
     if (!device_is_ready(dev)) {
-        printk("\nError: Device \"%s\" is not ready; "
+        LOG_ERR("\nError: Device \"%s\" is not ready; "
                 "check the driver initialization logs for errors.\n",
                 dev->name);
         return NULL;
     }
 
-    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    LOG_INF("Found device \"%s\", getting sensor data", dev->name);
     return dev;
 }
 
@@ -326,18 +326,18 @@ static const struct device *get_sht3xd_device(void) {
 
     if (dev == NULL) {
         /* No such node, or the node does not have status "okay". */
-        printk("\nError: no device SHT3XD found.\n");
+        LOG_ERR("\nError: no device SHT3XD found.\n");
         return NULL;
     }
 
     if (!device_is_ready(dev)) {
-        printk("\nError: Device \"%s\" is not ready; "
+        LOG_ERR("\nError: Device \"%s\" is not ready; "
                 "check the driver initialization logs for errors.\n",
                 dev->name);
         return NULL;
     }
 
-    printk("Found device \"%s\", getting sensor data\n", dev->name);
+    LOG_INF("Found device \"%s\", getting sensor data", dev->name);
     return dev;
 }
 
@@ -365,10 +365,10 @@ extern void take_a_reading() {
         query_ambient_sensors();
         
         // guarda los resultados
-        float no2 = ((alphasensor[1] - 230)-(alphasensor[0] - 230)) / 165;
-        float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
-        float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
-        float co = ((alphasensor[7] - 335)-(alphasensor[6] - 340)) / 165;
+        float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
+        float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / 240;
+        float o3no2 = ((alphasensor[4] - 240)-(alphasensor[5] - 230)) / 216;
+        float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / 165;
         
         float o3 = o3no2 - no2;
 
@@ -403,20 +403,22 @@ extern void take_a_reading() {
         
 
         for (int n = 0; n < 8; n++) {
-            voltages_table[n][c] = voltages[n];
+            voltages_table[n][c] = alphasensor[n]; // ojo aqui
         }
         for (int n = 0; n < 3; n++) {
             ambientsensor_table[n][c] = ambientsensor[n];
         }
 
         /*
-        // imprime voltajes
+        //imprime voltajes
         char mv[40] = {0};
         for (int i = 0; i < 8; i++) {
             snprintfcb(mv, 40, "%0.2f", alphasensor[i]);
             printk("alphasensor[%d]: %s\n", i, mv);
         }
-        */
+       */
+        
+        
         
         c++;
         if (c == readings) {
@@ -446,9 +448,9 @@ extern void take_a_reading() {
 
             // guarda los resultados
             float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
-            float so2 = ((alphasensor[3] - 335)-(alphasensor[2] - 340)) / 240;
-            float o3no2 = ((alphasensor[5] - 240)-(alphasensor[4] - 230)) / 216;
-            float co = ((alphasensor[7] - 335)-(alphasensor[6] - 340)) / 165;
+            float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / 240;
+            float o3no2 = ((alphasensor[4] - 240)-(alphasensor[5] - 230)) / 216;
+            float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / 165;
             
             float o3 = o3no2 - no2;
 
@@ -530,21 +532,21 @@ extern void take_a_reading() {
             convertToBytes(array,ambientsensor[2]);
             memcpy(results_data+32,array,4);
             
-            // pure voltage_data in mv
-            
-            voltages_data[0] = 0x01; // voltages_data command
-            
-            convertToBytes(array,now);
-            memcpy(voltages_data+4,array,4);
-            
-
+            /*
             // imprime voltajes
             char mv[40] = {0};
             for (int i = 0; i < 8; i++) {
                 snprintfcb(mv, 40, "%0.2f", alphasensor[i]);
                 printk("alphasensor[%d]: %s\n", i, mv);
             }
-        
+            */
+            
+            // pure voltage_data in mv
+            
+            voltages_data[0] = 0x01; // voltages_data command
+            
+            convertToBytes(array,now);
+            memcpy(voltages_data+4,array,4);
             
             int offset=8;
             for (int i=0; i < 8; i++) {
@@ -553,7 +555,9 @@ extern void take_a_reading() {
                 offset=offset+4;
             }
 
+            /*
             printk("%s at %u ms past: %d\n", format_time(sp.rtc.tv_sec, sp.rtc.tv_nsec), syncclock, rc);
+            
             printk("\n*-*-*- Sensor Reading Interpreted Data *-*-*-*-\n");
             for (int i = 0; i < sizeof (results_data); i++) {
                 printk("%x:", results_data[i]);
@@ -564,7 +568,7 @@ extern void take_a_reading() {
                 printk("%x:", voltages_data[i]);
             }
             printk("\n*-*-*-*-*-*-*-*-*-*-*\n");            
-            
+            */
 
 
         }
@@ -631,7 +635,7 @@ void update_results() {
     LOG_INF("Entering Loop...");
     
     while(1) {
-        k_sleep(K_MSEC(10000));
+        
 
 
         ret = lorawan_send(1, results_data, sizeof (results_data), LORAWAN_MSG_CONFIRMED);
@@ -683,11 +687,15 @@ void update_results() {
             LOG_INF("Voltage Data sent!");
         }
     }
+    k_sleep(K_MSEC(60000));
 
 }
 
 void main(void) {
 
+    
+    results_data[0] = 0;
+    voltages_data[0] = 0;
 
 
     dev_sht3xd = get_sht3xd_device();
@@ -712,21 +720,21 @@ void main(void) {
 
     uint32_t i2c3_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_MASTER;
 
-    printk("Initializing I2C 3...\n");
+    LOG_INF("Initializing I2C 3...");
     i2c3_dev = device_get_binding("I2C_3");
     if (!i2c3_dev) {
-        printk("I2C3: Device driver not found.\n");
+        LOG_INF("I2C3: Device driver not found.");
         return;
     }
 
     if (i2c_configure(i2c3_dev, i2c3_cfg)) {
-        printk("I2C3 config failed\n");
+        LOG_ERR("I2C3 config failed");
     } else {
-        printk("i2c3 configured...\n");
+        LOG_ERR("i2c3 configured...");
     }
 
 
-    printk("Size of Float %d\n", sizeof (float));
+    
 
 
     k_sleep(K_MSEC(3000));
@@ -817,13 +825,8 @@ void main(void) {
     
     lv_obj_add_style(table, LV_TABLE_PART_CELL2, &style2);
     
-    
     lv_style_set_text_color(&table_style, LV_TABLE_PART_CELL3, LV_COLOR_YELLOW);
     lv_style_set_text_color(&table_style, LV_TABLE_PART_CELL4, LV_COLOR_CYAN);
-    
-    
-   
-    
     
     lv_style_set_bg_color(&table_style, LV_STATE_DEFAULT, LV_COLOR_BLACK);
     
