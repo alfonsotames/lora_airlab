@@ -154,9 +154,9 @@ void convertToBytes(char* array, float f) {
 void query_ambient_sensors() {
 
 
-    k_msleep(40);
+    k_msleep(20);
     int rc = sensor_sample_fetch(dev_sht3xd);
-    k_msleep(40);
+    k_msleep(20);
 
     if (rc == 0) {
         rc = sensor_channel_get(dev_sht3xd, SENSOR_CHAN_AMBIENT_TEMP, &temp);
@@ -169,9 +169,9 @@ void query_ambient_sensors() {
         return;
     }
 
-    k_msleep(40);
+    k_msleep(20);
     rc = sensor_sample_fetch(dev_bme280);
-    k_msleep(40);
+    k_msleep(20);
 
     if (rc == 0) {
         rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_PRESS, &press);
@@ -220,14 +220,14 @@ void query_alphasensors() {
 
         cmd[2] = 0x83;
         ret = i2c_write(i2c3_dev, cmd, 3, addr);
-        k_msleep(20);
+        k_msleep(10);
 
         cmd[0] = 0x00;
         ret = i2c_write(i2c3_dev, cmd, 1, addr);
-        k_msleep(20);
+        k_msleep(10);
 
         ret = i2c_read(i2c3_dev, readbuf, 2, addr);
-        k_msleep(50);
+        k_msleep(20);
 
         reading = (readbuf[0] << 8 | readbuf[1]);
         //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
@@ -236,7 +236,7 @@ void query_alphasensors() {
 
         //printk("Reading Alphasensor[%d]: %.2f\n", i, alphasensor[i]);
     }
-    k_msleep(50);
+    k_msleep(10);
 
     addr = 0x49;
     for (int i = 0; i < 4; i++) {
@@ -258,14 +258,14 @@ void query_alphasensors() {
 
         cmd[2] = 0x83;
         ret = i2c_write(i2c3_dev, cmd, 3, addr);
-        k_msleep(20);
+        k_msleep(10);
 
         cmd[0] = 0x00;
         ret = i2c_write(i2c3_dev, cmd, 1, addr);
-        k_msleep(20);
+        k_msleep(10);
 
         ret = i2c_read(i2c3_dev, readbuf, 2, addr);
-        k_msleep(50);
+        k_msleep(20);
 
         reading = (readbuf[0] << 8 | readbuf[1]);
         //printk("0,1: %x,%x   :   ",readbuf[0], readbuf[1]);
@@ -365,12 +365,12 @@ extern void take_a_reading() {
         query_ambient_sensors();
         
         // guarda los resultados
-        float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
-        float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / 240;
-        float o3no2 = ((alphasensor[4] - 240)-(alphasensor[5] - 230)) / 216;
-        float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / 165;
+        float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / .165;
+        float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / .240;
+        float o3no2 = ((alphasensor[4] - 0)-(alphasensor[5] - 0)) / .216;
+        float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / .165;
         
-        float o3 = o3no2 - no2;
+        float o3 = o3no2;
 
         float f;
         
@@ -447,12 +447,12 @@ extern void take_a_reading() {
             }
 
             // guarda los resultados
-            float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / 165;
-            float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / 240;
-            float o3no2 = ((alphasensor[4] - 240)-(alphasensor[5] - 230)) / 216;
-            float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / 165;
+            float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / .165;
+            float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / .240;
+            float o3no2 = ((alphasensor[4] - 0)-(alphasensor[5] - 0)) / .216;
+            float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / .165;
             
-            float o3 = o3no2 - no2;
+            float o3 = o3no2;
 
             float f;
 
