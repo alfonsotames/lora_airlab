@@ -13,9 +13,10 @@
 #include <drivers/i2c.h>
 #include <drivers/display.h>
 #include <drivers/rtc/maxim_ds3231.h>
-
 #include <lvgl.h>
-
+#include <storage/disk_access.h>
+#include <fs/fs.h>
+#include <ff.h>
 
 
 #define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
@@ -39,7 +40,23 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 #include <logging/log.h>
 LOG_MODULE_REGISTER(lora_airlab);
 
-char data[] = {'m', 'u', 'f', 'u', 'f', 'u'};
+/* * * * * * * * * SD CARD * * * * * * * * * */
+static int lsdir(const char *path);
+
+static FATFS fat_fs;
+/* mounting info */
+static struct fs_mount_t mp = {
+	.type = FS_FATFS,
+	.fs_data = &fat_fs,
+};
+
+/*
+*  Note the fatfs library is able to mount only strings inside _VOLUME_STRS
+*  in ffconf.h
+*/
+static const char *disk_mount_pt = "/SD:";
+
+/* * * * * * * * * * LoRa * * * * * * * * * * */
 
 static void dl_callback(uint8_t port, bool data_pending,
         int16_t rssi, int8_t snr,
@@ -57,26 +74,6 @@ static void lorwan_datarate_changed(enum lorawan_datarate dr) {
     lorawan_get_payload_sizes(&unused, &max_size);
     LOG_INF("New Datarate: DR_%d, Max Payload %d", dr, max_size);
 }
-
-// Clock Functions and Data Types
-
-static const char *format_time(time_t time,
-        long nsec) {
-    static char buf[64];
-    char *bp = buf;
-    char *const bpe = bp + sizeof (buf);
-    struct tm tv;
-    struct tm *tp = gmtime_r(&time, &tv);
-
-    bp += strftime(bp, bpe - bp, "%Y-%m-%d %H:%M:%S", tp);
-    if (nsec >= 0) {
-        bp += snprintf(bp, bpe - bp, ".%09lu", nsec);
-    }
-    bp += strftime(bp, bpe - bp, " %a %j", tp);
-    return buf;
-}
-
-
 
 
 /* * * * * * * * * GLOBAL VARIABLES * * * * * * * * * * * * */
@@ -116,13 +113,9 @@ float ambientsensor_table[3][readings];
  * 
 */ 
   
+// (40)
 char results_data[8 * sizeof (float) + 8];
 char voltages_data[8 * sizeof (float) + 8];
-
-
-
-
-
 char arr[4];
 
 struct sensor_value temp, hum, press;
@@ -139,6 +132,76 @@ lv_obj_t *no2_label;
 lv_obj_t *so2_label;
 lv_obj_t *o3_label;
 */
+
+
+// Clock Functions and Data Types
+
+
+static const char *format_time(time_t time, long nsec) {
+    static char buf[64];
+    char *bp = buf;
+    char *const bpe = bp + sizeof (buf);
+    struct tm tv;
+    struct tm *tp = gmtime_r(&time, &tv);
+
+    bp += strftime(bp, bpe - bp, "%Y-%m-%d %H:%M:%S", tp);
+    /*
+    if (nsec >= 0) {
+        bp += snprintf(bp, bpe - bp, ".%09lu", nsec);
+    }
+    bp += strftime(bp, bpe - bp, " %a %j", tp);
+    */
+    return buf;
+}
+
+static const char *format_date(time_t time, long nsec) {
+    static char buf[64];
+    char *bp = buf;
+    char *const bpe = bp + sizeof (buf);
+    struct tm tv;
+    struct tm *tp = gmtime_r(&time, &tv);
+    bp += strftime(bp, bpe - bp, "%Y%m%d", tp);
+    return buf;
+}
+
+static const char *get_date() {
+    // get time
+    uint32_t syncclock_Hz = maxim_ds3231_syncclock_frequency(dev_ds3231);
+    uint32_t syncclock = maxim_ds3231_read_syncclock(dev_ds3231);
+    uint32_t now = 0;
+    int rc = counter_get_value(dev_ds3231, &now);
+
+    struct maxim_ds3231_syncpoint sp = {
+        .rtc =
+        {
+            .tv_sec = now,
+            .tv_nsec = (uint64_t) NSEC_PER_SEC * syncclock / syncclock_Hz,
+        },
+        .syncclock = syncclock,
+    };
+    return format_date(sp.rtc.tv_sec, sp.rtc.tv_nsec);
+}
+
+/* * * * * * * * Save data to SD CARD * * * * * * * * * */
+static void save_data(char* data) {
+    char fname[50];
+    snprintfcb(fname,50, "/SD:/%s.lab", get_date());
+    
+    struct fs_file_t file;
+
+    fs_file_t_init(&file);
+
+    int rc = fs_open(&file, fname, FS_O_CREATE | FS_O_APPEND | FS_O_RDWR);
+    if (rc < 0) {
+            printk("FAIL: open %s: %d\n", fname, rc);
+    }
+    rc = fs_write(&file, data, sizeof(data));
+    if (rc < 0) {
+            printk("FAIL: cannot write to %s: %d\n", fname, rc);
+    }
+    fs_close(&file);
+}
+
 
 void convertToBytes(char* array, float f) {
     //printk("Converting: %x\n",f);
@@ -409,26 +472,13 @@ extern void take_a_reading() {
             ambientsensor_table[n][c] = ambientsensor[n];
         }
 
-        /*
-        //imprime voltajes
-        char mv[40] = {0};
-        for (int i = 0; i < 8; i++) {
-            snprintfcb(mv, 40, "%0.2f", alphasensor[i]);
-            printk("alphasensor[%d]: %s\n", i, mv);
-        }
-       */
-        
-        
-        
+
+ 
         c++;
         if (c == readings) {
             //printk("Doing calculations...\n");
             c = 0;
-            
 
-
-            
-            
             for (int r = 0; r < readings - 1; r++) {
                 for (int i = 0; i < 8; i++) {
                     alphasensor[i] = alphasensor[i] + voltages_table[i][r];
@@ -555,7 +605,7 @@ extern void take_a_reading() {
                 offset=offset+4;
             }
 
-            /*
+            
             printk("%s at %u ms past: %d\n", format_time(sp.rtc.tv_sec, sp.rtc.tv_nsec), syncclock, rc);
             
             printk("\n*-*-*- Sensor Reading Interpreted Data *-*-*-*-\n");
@@ -568,8 +618,8 @@ extern void take_a_reading() {
                 printk("%x:", voltages_data[i]);
             }
             printk("\n*-*-*-*-*-*-*-*-*-*-*\n");            
-            */
-
+            save_data(results_data);
+            save_data(voltages_data);
 
         }
     }
@@ -636,8 +686,6 @@ void update_results() {
     
     while(1) {
         
-
-
         ret = lorawan_send(1, results_data, sizeof (results_data), LORAWAN_MSG_CONFIRMED);
 
         /*
@@ -691,6 +739,48 @@ void update_results() {
 
 }
 
+
+static int lsdir(const char *path)
+{
+	int res;
+	struct fs_dir_t dirp;
+	static struct fs_dirent entry;
+
+	fs_dir_t_init(&dirp);
+
+	/* Verify fs_opendir() */
+	res = fs_opendir(&dirp, path);
+	if (res) {
+		printk("Error opening dir %s [%d]\n", path, res);
+		return res;
+	}
+
+	printk("\nListing dir %s ...\n", path);
+	for (;;) {
+		/* Verify fs_readdir() */
+		res = fs_readdir(&dirp, &entry);
+
+		/* entry.name[0] == 0 means end-of-dir */
+		if (res || entry.name[0] == 0) {
+			break;
+		}
+
+		if (entry.type == FS_DIR_ENTRY_DIR) {
+			printk("[DIR ] %s\n", entry.name);
+		} else {
+			printk("[FILE] %s (size = %zu)\n",
+				entry.name, entry.size);
+		}
+	}
+
+	/* Verify fs_closedir() */
+	fs_closedir(&dirp);
+
+	return res;
+}
+
+
+
 void main(void) {
 
     
@@ -712,9 +802,51 @@ void main(void) {
     if (dev_ds3231 == NULL) {
         return;
     }
+    
+    /* * * * * * * FILESYSTEM INIT FOR SD CARD * * * * * * * * * * */
+    
+    do {
+            static const char *disk_pdrv = "SD";
+            uint64_t memory_size_mb;
+            uint32_t block_count;
+            uint32_t block_size;
 
+            if (disk_access_init(disk_pdrv) != 0) {
+                    LOG_ERR("Storage init ERROR!");
+                    break;
+            }
 
+            if (disk_access_ioctl(disk_pdrv,
+                            DISK_IOCTL_GET_SECTOR_COUNT, &block_count)) {
+                    LOG_ERR("Unable to get sector count");
+                    break;
+            }
+            LOG_INF("Block count %u", block_count);
 
+            if (disk_access_ioctl(disk_pdrv,
+                            DISK_IOCTL_GET_SECTOR_SIZE, &block_size)) {
+                    LOG_ERR("Unable to get sector size");
+                    break;
+            }
+            printk("Sector size %u\n", block_size);
+
+            memory_size_mb = (uint64_t)block_count * block_size;
+            printk("Memory Size(MB) %u\n", (uint32_t)(memory_size_mb >> 20));
+    } while (0);
+    
+    
+    /* * * * * * * Mount Filesystem * * * * * * * * */
+    
+    mp.mnt_point = disk_mount_pt;
+    int res = fs_mount(&mp);
+
+    if (res == FR_OK) {
+            printk("Disk mounted.\n");
+            lsdir(disk_mount_pt);
+    } else {
+            printk("Error mounting disk.\n");
+    }
+ 
     /* * * * * * * * * * * * * i2c3 Device * * * * * * * * * * * * * */
 
 
@@ -733,16 +865,9 @@ void main(void) {
         LOG_ERR("i2c3 configured...");
     }
 
-
-    
-
-
     k_sleep(K_MSEC(3000));
 
     /* * * * * * * * * * * * * Display * * * * * * * * * * * * * */
-
-
-
 
     const struct device *display_dev;
     display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
@@ -752,13 +877,9 @@ void main(void) {
         return;
     }
 
-
-
     static lv_style_t screenStyle1;
     static lv_style_t style1;
     static lv_style_t chiqui;
-
-    
 
     lv_style_init(&screenStyle1);
     lv_style_init(&style1);
@@ -793,8 +914,6 @@ void main(void) {
     lv_style_init(&table_style);
     lv_style_init(&style2);
 
-
-    
     //lv_style_set_bg_opa(&style2, LV_STATE_DEFAULT, LV_OPA_COVER);
     
     lv_style_set_pad_top(&table_style, LV_TABLE_PART_BG, 0);
@@ -857,38 +976,11 @@ void main(void) {
     lv_table_set_cell_type(table, 6, 0, 3);
     lv_table_set_cell_type(table, 6, 1, 2);
     lv_table_set_cell_type(table, 6, 2, 2);       
- 
 
-    
-    
-
-    
-    
-    //lv_obj_align(table, NULL, LV_ALIGN_CENTER, 0, 0);
-    
-    
-
-    /*Make the cells of the first row center aligned */
-    //lv_table_set_cell_align(table, 0, 0, LV_LABEL_ALIGN_CENTER);
-    //lv_table_set_cell_align(table, 0, 1, LV_LABEL_ALIGN_CENTER);
-
-    /*Align the price values to the right in the 2nd column*/
-    //lv_table_set_cell_align(table, 1, 1, LV_LABEL_ALIGN_RIGHT);
-    //lv_table_set_cell_align(table, 2, 1, LV_LABEL_ALIGN_RIGHT);
-    //lv_table_set_cell_align(table, 3, 1, LV_LABEL_ALIGN_RIGHT);
 
     lv_table_set_col_width(table, 0,60);
     lv_table_set_col_width(table, 1,80);
     lv_table_set_col_width(table, 2,80);
-    
-
-    
-    
-    
-    
-
-
-
 
     lv_table_set_cell_value(table, 0, 0, "TEMP");
     lv_table_set_cell_value(table, 1, 0, "HR");
@@ -899,52 +991,10 @@ void main(void) {
     lv_table_set_cell_value(table, 6, 0, "CO");
     
 
-
-    
-
-
-    
-    /*
-    for (int row=2; row < 8; row++) {
-        for (int col=2; col <3; col++) {
-            lv_table_set_cell_value(table, col, row, "0");
-        }
-    }
-*/
     lv_table_ext_t * ext = lv_obj_get_ext_attr(table);
     ext->row_h[0] = 10;
     
     
-    /*
-    
-    humidity_label = lv_label_create(screen1, NULL);
-    temperat_label = lv_label_create(screen1, NULL);
-    press_label = lv_label_create(screen1, NULL);
-    no2_label = lv_label_create(screen1, NULL);
-    so2_label = lv_label_create(screen1, NULL);
-    o3_label = lv_label_create(screen1, NULL);
- 
-     
-    
-    lv_obj_add_style(humidity_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(temperat_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(press_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(no2_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(so2_label, LV_OBJ_PART_MAIN, &data_style);
-    lv_obj_add_style(o3_label, LV_OBJ_PART_MAIN, &data_style);
-
-    lv_obj_align(humidity_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -50);
-    lv_obj_align(temperat_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, -20);
-    lv_obj_align(press_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 10);
-    lv_obj_align(no2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 40);
-    lv_obj_align(so2_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 70);
-    lv_obj_align(o3_label, NULL, LV_ALIGN_IN_LEFT_MID, 0, 100);
-    */
-
-
-
-
-
     lv_scr_load(screen1);
     lv_task_handler();
     display_blanking_off(display_dev);
