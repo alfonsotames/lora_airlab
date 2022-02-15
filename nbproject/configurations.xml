@@ -27,7 +27,7 @@
       </codeAssistance>
       <makefileType>
         <makeTool>
-          <buildCommandWorkingDir>build</buildCommandWorkingDir>
+          <buildCommandWorkingDir>build-nucleo_wl55jc</buildCommandWorkingDir>
           <buildCommand>ninja</buildCommand>
           <cleanCommand>ninja clean</cleanCommand>
           <executablePath></executablePath>
@@ -40,7 +40,8 @@
       <folder path="0">
         <cTool>
           <incDir>
-            <pElem>../../zephyr/zephyr/include</pElem>
+            <pElem>../../zephyrproject/zephyr/include</pElem>
+            <pElem>../../zephyrproject/modules/lib/gui/lvgl</pElem>
           </incDir>
         </cTool>
       </folder>

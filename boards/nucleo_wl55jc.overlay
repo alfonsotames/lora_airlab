@@ -2,12 +2,14 @@
 
 // intenta SDA en PC1 (CN10-23) y CLK en PC0 (CN10-14)
 &i2c3 {
+        pinctrl-names = "default";
 	pinctrl-0 = <&i2c3_scl_pb10 &i2c3_sda_pb4>;	
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &i2c2 {
+pinctrl-names = "default";
 	sht3xd@44 {
 		compatible = "sensirion,sht3xd";
 		reg = <0x44>;
@@ -33,6 +35,7 @@
 
 
 &spi2 {
+        pinctrl-names = "default";
 	pinctrl-0 = <&spi2_nss_pb12     // Morpho CN10-33
                      &spi2_sck_pb13     // Morpho CN7-38
 		     &spi2_miso_pb14    // Morpho CN7-36
@@ -54,6 +57,7 @@
 
 
 &spi1 {
+        pinctrl-names = "default";
 	pinctrl-0 = <&spi1_nss_pa4 &spi1_sck_pa5
 		     &spi1_miso_pa6 &spi1_mosi_pa7>;
 	status = "okay";

@@ -195,10 +195,14 @@ static void save_data(char* data) {
     if (rc < 0) {
             printk("FAIL: open %s: %d\n", fname, rc);
     }
-    rc = fs_write(&file, data, sizeof(data));
+    //rc = fs_write(&file, data, sizeof(data));
+    rc = fs_write(&file, data, 40);
     if (rc < 0) {
             printk("FAIL: cannot write to %s: %d\n", fname, rc);
     }
+    
+    printk(" **** fs_write wrote %d bytes **** \n",rc);
+    
     fs_close(&file);
 }
 
@@ -428,13 +432,24 @@ extern void take_a_reading() {
         query_ambient_sensors();
         
         // guarda los resultados
-        float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / .165;
-        float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / .240;
-        float o3no2 = ((alphasensor[4] - 0)-(alphasensor[5] - 0)) / .216;
-        float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / .165;
+        /*
+        float no2 = ((alphasensor[0])-(alphasensor[1])) / .165;
+        float so2 = ((alphasensor[2])-(alphasensor[3])) / .240;
+        float o3no2 = ((alphasensor[4])-(alphasensor[5])) / 216;
+        float co = ((alphasensor[6])-(alphasensor[7])) / .165;
+        */
+        float no2 = ((alphasensor[0])-(alphasensor[1])) / 5;
+        if (no2 < 0) no2=0;
+        float so2 = ((alphasensor[2])-(alphasensor[3])) / 100;
+        if (so2 < 0) so2=0;
+        float o3no2 = ((alphasensor[4])-(alphasensor[5])) / 100;
+        if (o3no2 < 0) o3no2=0;
+        float co = ((alphasensor[6])-(alphasensor[7])) / 100;
+        if (co < 0) co=0;
         
-        float o3 = o3no2;
-
+        float o3 = o3no2-no2;
+        if (o3 < 0) o3=0;
+        
         float f;
         
         f = co;
@@ -495,14 +510,25 @@ extern void take_a_reading() {
             for (int i = 0; i < 3; i++) {
                 ambientsensor[i] = (ambientsensor[i] / readings);
             }
+            char volter[40];
+            for (int i=0; i<8; i++) {
+                snprintfcb(volter, 40, "%0.2f", alphasensor[i]);
+                printk("alphasensor[%d]: %s\n",i,volter);
+            }
 
             // guarda los resultados
-            float no2 = ((alphasensor[0] - 230)-(alphasensor[1] - 230)) / .165;
-            float so2 = ((alphasensor[2] - 335)-(alphasensor[3] - 340)) / .240;
-            float o3no2 = ((alphasensor[4] - 0)-(alphasensor[5] - 0)) / .216;
-            float co = ((alphasensor[6] - 335)-(alphasensor[7] - 340)) / .165;
             
-            float o3 = o3no2;
+        float no2 = ((alphasensor[0])-(alphasensor[1])) / 5;
+        if (no2 < 0) no2=0;
+        float so2 = ((alphasensor[2])-(alphasensor[3])) / 100;
+        if (so2 < 0) so2=0;
+        float o3no2 = ((alphasensor[4])-(alphasensor[5])) / 100;
+        if (o3no2 < 0) o3no2=0;
+        float co = ((alphasensor[6])-(alphasensor[7])) / 100;
+        if (co < 0) co=0;
+        
+        float o3 = o3no2-no2;
+               if (o3 < 0) o3=0;
 
             float f;
 
@@ -612,6 +638,7 @@ extern void take_a_reading() {
             for (int i = 0; i < sizeof (results_data); i++) {
                 printk("%x:", results_data[i]);
             }
+            
             printk("\n*-*-*-*-*-*-*-*-*-*-*\n");
             printk("\n*-*-*-     Raw sensor Voltage Data     *-*-*-*-\n");
             for (int i = 0; i < sizeof (voltages_data); i++) {
