@@ -13,7 +13,6 @@
 #include <drivers/i2c.h>
 #include <drivers/display.h>
 #include <drivers/rtc/maxim_ds3231.h>
-#include <lvgl.h>
 #include <storage/disk_access.h>
 #include <fs/fs.h>
 #include <ff.h>
@@ -121,17 +120,6 @@ char arr[4];
 struct sensor_value temp, hum, press;
 
 
-lv_obj_t *title_label;
-lv_obj_t *table;
-
-/*
-lv_obj_t *humidity_label;
-lv_obj_t *temperat_label;
-lv_obj_t *press_label;
-lv_obj_t *no2_label;
-lv_obj_t *so2_label;
-lv_obj_t *o3_label;
-*/
 
 
 // Clock Functions and Data Types
@@ -453,30 +441,7 @@ extern void take_a_reading() {
         float f;
         
         f = co;
-        snprintfcb(co_str, 40, "%0.2f", f);
-        lv_table_set_cell_value(table, 6, 1, co_str);       
-
-        f = no2;
-        snprintfcb(no2_str, 40, "%0.2f", f);
-        lv_table_set_cell_value(table, 3, 1, no2_str);
-
-
-        f = so2;
-        snprintfcb(so2_str, 40, "%0.2f", f);
-        lv_table_set_cell_value(table, 4, 1, so2_str);
-
-        f = o3;
-        snprintfcb(o3_str, 40, "%0.2f", f);
-        lv_table_set_cell_value(table, 5, 1, o3_str);
-        
-        snprintfcb(temperat_str, 40, "%0.2f", ambientsensor[1]);
-        lv_table_set_cell_value(table, 0, 1, temperat_str);
-        
-        snprintfcb(humidity_str, 40, "%0.2f", ambientsensor[0]);
-        lv_table_set_cell_value(table, 1, 1, humidity_str);
-
-        snprintfcb(press_str, 40, "%0.2f", ambientsensor[2]);
-        lv_table_set_cell_value(table, 2, 1, press_str);           
+       
         
         
 
@@ -533,32 +498,8 @@ extern void take_a_reading() {
             float f;
 
             f = co;
-            snprintfcb(co_str, 40, "%0.2f", f);
-            lv_table_set_cell_value(table, 6, 2, co_str);
-            
-            f = no2;
-            snprintfcb(no2_str, 40, "%0.2f", f);
-            lv_table_set_cell_value(table, 3, 2, no2_str);
-            
 
-            f = so2;
-            snprintfcb(so2_str, 40, "%0.2f", f);
-            lv_table_set_cell_value(table, 4, 2, so2_str);
-
-            f = o3;
-            snprintfcb(o3_str, 40, "%0.2f", f);
-            lv_table_set_cell_value(table, 5, 2, o3_str);
-
-            snprintfcb(humidity_str, 40, "%0.2f", ambientsensor[0]);
-            lv_table_set_cell_value(table, 1, 2, humidity_str);
-
-            snprintfcb(temperat_str, 40, "%0.2f", ambientsensor[1]);
-            lv_table_set_cell_value(table, 0, 2, temperat_str);
-
-            snprintfcb(press_str, 40, "%0.2f", ambientsensor[2]);
-            lv_table_set_cell_value(table, 2, 2, press_str);
-            
-            
+                       
             /* GET TIME */
 
             uint32_t syncclock_Hz = maxim_ds3231_syncclock_frequency(dev_ds3231);
@@ -893,138 +834,9 @@ void main(void) {
     }
 
     k_sleep(K_MSEC(3000));
-
-    /* * * * * * * * * * * * * Display * * * * * * * * * * * * * */
-
-    const struct device *display_dev;
-    display_dev = device_get_binding(CONFIG_LVGL_DISPLAY_DEV_NAME);
-    LOG_INF(CONFIG_LVGL_DISPLAY_DEV_NAME);
-    if (display_dev == NULL) {
-        LOG_ERR("device not found.  Aborting test.");
-        return;
-    }
-
-    static lv_style_t screenStyle1;
-    static lv_style_t style1;
-    static lv_style_t chiqui;
-
-    lv_style_init(&screenStyle1);
-    lv_style_init(&style1);
-    lv_style_init(&chiqui);
-
-    lv_style_set_bg_color(&screenStyle1, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-    lv_style_set_text_font(&style1, LV_STATE_DEFAULT, &lv_font_montserrat_24);
-    lv_style_set_text_color(&style1, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-
-    
-
-    lv_obj_t *screen1;
-    screen1 = lv_obj_create(NULL, NULL);
-    lv_obj_add_style(screen1, LV_LABEL_PART_MAIN, &screenStyle1);
-
-    title_label = lv_label_create(screen1, NULL);
-    lv_obj_add_style(title_label, LV_OBJ_PART_MAIN, &style1);
-
-    lv_label_set_text(title_label, "AirLab");
-    lv_obj_align(title_label, NULL, LV_ALIGN_IN_TOP_MID, 0, 0);    
-    
-    /*Create a Table */
-    
-    table = lv_table_create(screen1, NULL);
-        
-    lv_table_set_col_cnt(table, 3);
-    lv_table_set_row_cnt(table, 7);
-    
-    static lv_style_t table_style;
-    static lv_style_t style2;
-    
-    lv_style_init(&table_style);
-    lv_style_init(&style2);
-
-    //lv_style_set_bg_opa(&style2, LV_STATE_DEFAULT, LV_OPA_COVER);
-    
-    lv_style_set_pad_top(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_pad_bottom(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_text_line_space(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_border_width(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_pad_left(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_pad_right(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_pad_inner(&table_style, LV_TABLE_PART_BG, 0);
-    lv_style_set_text_letter_space(&table_style, LV_TABLE_PART_BG, 0);
-    
-    //lv_style_set_text_color(&table_style, LV_TABLE_PART_BG, LV_COLOR_RED);
-    
-    lv_style_set_text_color(&table_style, LV_TABLE_PART_BG, LV_COLOR_WHITE);
-    lv_style_set_text_color(&table_style, LV_TABLE_PART_CELL1, LV_COLOR_BLUE);
-    
-    lv_style_set_text_color(&style2, LV_STATE_DEFAULT, LV_COLOR_WHITE);
-    lv_style_set_pad_top(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_pad_bottom(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_text_line_space(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_border_width(&style2, LV_STATE_DEFAULT, 1);
-    lv_style_set_border_color(&style2, LV_STATE_DEFAULT, LV_COLOR_RED);
-    lv_style_set_pad_left(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_pad_right(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_pad_inner(&style2, LV_STATE_DEFAULT, 0);
-    lv_style_set_text_letter_space(&style2, LV_TABLE_PART_BG, 0);
-    lv_style_set_text_font(&style2, LV_STATE_DEFAULT, &lv_font_montserrat_20);
-    
-    lv_obj_add_style(table, LV_TABLE_PART_CELL2, &style2);
-    
-    lv_style_set_text_color(&table_style, LV_TABLE_PART_CELL3, LV_COLOR_YELLOW);
-    lv_style_set_text_color(&table_style, LV_TABLE_PART_CELL4, LV_COLOR_CYAN);
-    
-    lv_style_set_bg_color(&table_style, LV_STATE_DEFAULT, LV_COLOR_BLACK);
-    
-    lv_obj_add_style(table, LV_STATE_DEFAULT, &table_style);
-
-    lv_style_copy(&chiqui, &style2);
-    lv_style_set_text_font(&chiqui, LV_STATE_DEFAULT, &lv_font_montserrat_12);
-    lv_obj_add_style(table, LV_TABLE_PART_CELL3, &chiqui);
-
-    lv_table_set_cell_type(table, 0, 0, 3);
-    lv_table_set_cell_type(table, 0, 1, 2);
-    lv_table_set_cell_type(table, 0, 2, 2);
-    lv_table_set_cell_type(table, 1, 0, 3);
-    lv_table_set_cell_type(table, 1, 1, 2);
-    lv_table_set_cell_type(table, 1, 2, 2);
-    lv_table_set_cell_type(table, 2, 0, 3);
-    lv_table_set_cell_type(table, 2, 1, 2);
-    lv_table_set_cell_type(table, 2, 2, 2);
-    lv_table_set_cell_type(table, 3, 0, 3);
-    lv_table_set_cell_type(table, 3, 1, 2);
-    lv_table_set_cell_type(table, 3, 2, 2);
-    lv_table_set_cell_type(table, 4, 0, 3);
-    lv_table_set_cell_type(table, 4, 1, 2);
-    lv_table_set_cell_type(table, 4, 2, 2);
-    lv_table_set_cell_type(table, 5, 0, 3);
-    lv_table_set_cell_type(table, 5, 1, 2);
-    lv_table_set_cell_type(table, 5, 2, 2);    
-    lv_table_set_cell_type(table, 6, 0, 3);
-    lv_table_set_cell_type(table, 6, 1, 2);
-    lv_table_set_cell_type(table, 6, 2, 2);       
-
-
-    lv_table_set_col_width(table, 0,60);
-    lv_table_set_col_width(table, 1,80);
-    lv_table_set_col_width(table, 2,80);
-
-    lv_table_set_cell_value(table, 0, 0, "TEMP");
-    lv_table_set_cell_value(table, 1, 0, "HR");
-    lv_table_set_cell_value(table, 2, 0, "P");
-    lv_table_set_cell_value(table, 3, 0, "NO2");
-    lv_table_set_cell_value(table, 4, 0, "SO2");
-    lv_table_set_cell_value(table, 5, 0, "O3");
-    lv_table_set_cell_value(table, 6, 0, "CO");
-    
-
-    lv_table_ext_t * ext = lv_obj_get_ext_attr(table);
-    ext->row_h[0] = 10;
     
     
-    lv_scr_load(screen1);
-    lv_task_handler();
-    display_blanking_off(display_dev);
+
     
     
     k_thread_create(&take_a_reading_thread_data, take_a_reading_stack_area,
@@ -1041,7 +853,6 @@ void main(void) {
                                  NULL, NULL, NULL,
                                  5, 0, K_NO_WAIT);
     while (1) {
-        lv_task_handler();
         k_msleep(5);
     }
 
