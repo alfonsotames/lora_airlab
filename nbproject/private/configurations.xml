@@ -2,7 +2,16 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="src" name="0">
+      <in>file_system.c</in>
+      <in>file_system.h</in>
+      <in>global_devices.h</in>
+      <in>lora_system.c</in>
+      <in>lora_system.h</in>
       <in>main.c</in>
+      <in>opc.c</in>
+      <in>opc.h</in>
+      <in>time_system.c</in>
+      <in>time_system.h</in>
     </df>
   </logicalFolder>
   <projectmakefile></projectmakefile>
@@ -41,7 +50,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>west build</runcommandpicklistitem>
           <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>west flash -r stm32cubeprogrammer</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
@@ -49,8 +57,11 @@
           <runcommandpicklistitem>/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD  -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD  mode=UR -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
           <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD  mode=UR -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
+          <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD   -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
+          <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -hardRst  -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
+          <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD  mode=UR -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommand>
+        <runcommand>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommand>
         <rundir>./</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

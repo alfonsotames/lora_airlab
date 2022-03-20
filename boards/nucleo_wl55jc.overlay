@@ -55,14 +55,14 @@ pinctrl-names = "default";
 
 };
 
-
 &spi1 {
-        pinctrl-names = "default";
-	pinctrl-0 = <&spi1_nss_pa4 &spi1_sck_pa5
-		     &spi1_miso_pa6 &spi1_mosi_pa7>;
-	status = "okay";
-
-        cs-gpios = <&arduino_header 16 GPIO_ACTIVE_LOW>;	/* D10 */
-
-
+		label = "OPC";
+		compatible = "zephyr,spi-bitbang";
+		status="okay";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		clk-gpios = <&gpioa 5 GPIO_ACTIVE_HIGH>;
+		mosi-gpios = <&gpioa 7 GPIO_ACTIVE_HIGH>;
+		miso-gpios = <&gpioa 6 0>;
+		cs-gpios = <&gpioa 4 GPIO_ACTIVE_LOW>;
 };

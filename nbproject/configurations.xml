@@ -2,7 +2,16 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="src" name="0">
+      <in>file_system.c</in>
+      <in>file_system.h</in>
+      <in>global_devices.h</in>
+      <in>lora_system.c</in>
+      <in>lora_system.h</in>
       <in>main.c</in>
+      <in>opc.c</in>
+      <in>opc.h</in>
+      <in>time_system.c</in>
+      <in>time_system.h</in>
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -45,7 +54,25 @@
           </incDir>
         </cTool>
       </folder>
+      <item path="src/file_system.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/file_system.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/global_devices.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/lora_system.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/lora_system.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/main.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/opc.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/opc.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="src/time_system.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/time_system.h" ex="false" tool="3" flavor2="0">
       </item>
     </conf>
   </confs>
