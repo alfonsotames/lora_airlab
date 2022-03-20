@@ -19,7 +19,7 @@
     <conf name="Default" type="0">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
-        <platform>2</platform>
+        <platform>4</platform>
       </toolsSet>
       <compile>
         <compiledirpicklist>
@@ -50,7 +50,6 @@
       </nativedebugger>
       <runprofile version="9">
         <runcommandpicklist>
-          <runcommandpicklistitem>"${OUTPUT_PATH}"</runcommandpicklistitem>
           <runcommandpicklistitem>west flash -r stm32cubeprogrammer</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
           <runcommandpicklistitem>/usr/local/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -hardRst -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
@@ -60,8 +59,9 @@
           <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD   -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
           <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -hardRst  -w build-nucleo_wl55jc/zephyr/zephyr.hex</runcommandpicklistitem>
           <runcommandpicklistitem>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommandpicklistitem>
+          <runcommandpicklistitem>/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommandpicklistitem>
         </runcommandpicklist>
-        <runcommand>/home/mufufu/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommand>
+        <runcommand>/Applications/STMicroelectronics/STM32Cube/STM32CubeProgrammer/STM32CubeProgrammer.app/Contents/MacOs/bin/STM32_Programmer_CLI -c port=SWD -w build-nucleo_wl55jc/zephyr/zephyr.hex -s 0x00</runcommand>
         <rundir>./</rundir>
         <buildfirst>true</buildfirst>
         <terminal-type>0</terminal-type>

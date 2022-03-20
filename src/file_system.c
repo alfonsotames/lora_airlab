@@ -64,7 +64,7 @@ static const char *disk_mount_pt = "/SD:";
     } while (0);
     
     
-    /* * * * * * * Mount Filesystem * * * * * * * * */
+    // Mount Filesystem 
     
     mp.mnt_point = disk_mount_pt;
     int res = fs_mount(&mp);
@@ -85,24 +85,24 @@ static const char *disk_mount_pt = "/SD:";
 }
 
 /* * * * * * * * Save data to SD CARD * * * * * * * * * */
- void save_data() {
-   // do a test
+ void save_data(char* data, char* type) {
+     
+    LOG_INF("Saving data...");
     
-        LOG_INF("Saving data...");
-
-    char datos[] = "Esta es una prueba de grabacion";
-
-
+    char fname[40];
+    
+    snprintfcb(fname, 40, "/SD:/%s.%s", get_date(), type);
+    
     struct fs_file_t file;
 
     fs_file_t_init(&file);
 
-    int rc = fs_open(&file, "/SD:/test.txt", FS_O_CREATE | FS_O_APPEND | FS_O_RDWR);
+    int rc = fs_open(&file, fname, FS_O_CREATE | FS_O_APPEND | FS_O_RDWR);
     if (rc < 0) {
             LOG_ERR("FAIL: open file to write: %d", rc);
     }
-    //rc = fs_write(&file, data, sizeof(data));
-    rc = fs_write(&file, datos, sizeof(datos));
+    rc = fs_write(&file, data, sizeof(data));
+    
     if (rc < 0) {
             LOG_ERR("FAIL: cannot write: %d\n", rc);
     }

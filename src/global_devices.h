@@ -25,13 +25,13 @@ extern const struct device *gpioa;
 
 /* * * * * * * * * * LEDS  * * * * * * * * * * */
 
-//#define LED0_NODE DT_ALIAS(led0)
-//#define LED1_NODE DT_ALIAS(led1)
-//#define LED2_NODE DT_ALIAS(led2)
 
-//extern const struct gpio_dt_spec led_green;
-//extern const struct gpio_dt_spec led_red;
-//extern const struct gpio_dt_spec led_blue;
+#define LED1_NODE DT_ALIAS(led1)
+#define LED2_NODE DT_ALIAS(led2)
+
+extern const struct gpio_dt_spec led_green;
+extern const struct gpio_dt_spec led_red;
+
 
 
 #ifdef __cplusplus

@@ -29,9 +29,6 @@
 #define DELAY K_MSEC(5000)
 
 
-
-
-
 /* * * * * * * * * * Logging  * * * * * * * * * * */
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <logging/log.h>
@@ -48,9 +45,8 @@ const struct device *gpioa;
 
 /* * * * * * * * * * LEDS  * * * * * * * * * * */
 
-//const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
-//const struct gpio_dt_spec led_red = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
-//const struct gpio_dt_spec led_blue = GPIO_DT_SPEC_GET(LED0_NODE, gpios);    
+const struct gpio_dt_spec led_green = GPIO_DT_SPEC_GET(LED1_NODE, gpios);
+const struct gpio_dt_spec led_red = GPIO_DT_SPEC_GET(LED2_NODE, gpios);
 
             
            
@@ -65,27 +61,14 @@ const struct device *gpioa;
 K_THREAD_STACK_DEFINE(count_particles_stack_area, 16384);
 struct k_thread count_particles_thread_data;
 extern void count_particles() {
-    
-    
-        
-static const char *disk_mount_pt = "/SD:";
-    
-    
+  
     LOG_INF("Count Particles Thread Spawn!");
-    
-   
-    
-    
-    
-    save_data();
-    
-    
-    
+
     char text_data[100];
     struct histogram data;
-    while(0) {
+    while(1) {
         LOG_INF("Counting Particles...");
-        //gpio_pin_set_dt(&led_red,1);
+        gpio_pin_set_dt(&led_red,1);
         opc_init();    
         opc_start();
         data = opc_read_histogram(5);
@@ -98,20 +81,11 @@ static const char *disk_mount_pt = "/SD:";
                 data.pm25,
                 data.pm10);
         
+        LOG_INF("R: %s",text_data);
+        
         //save_data(text_data, "opc");
-        
-        
-        
- 
-    
-    
-    
-    
-        
-        
-        
-        
-        //gpio_pin_set_dt(&led_red,0);
+
+        gpio_pin_set_dt(&led_red,0);
         opc_stop();
         opc_release();
         k_msleep(120000);
@@ -169,36 +143,21 @@ void main(void) {
     // System Initialitations
     
     init_time_system();
-    
     init_and_mount_sdcard();
-    
-    
-    
-   
-                    
-                    
-                    
-                    
-                    
-                    
-    
+            
     LOG_INF("Date: %s",get_formatted_time());
     
     gpioa = device_get_binding("GPIOA");
     gpiob = device_get_binding("GPIOB");
     
-    //ret = gpio_pin_configure_dt(&led_green, GPIO_OUTPUT_INACTIVE);
-    //ret = gpio_pin_configure_dt(&led_red, GPIO_OUTPUT_INACTIVE);
-    //ret = gpio_pin_configure_dt(&led_blue, GPIO_OUTPUT_INACTIVE);
+    ret = gpio_pin_configure_dt(&led_green, GPIO_OUTPUT_INACTIVE);
+    ret = gpio_pin_configure_dt(&led_red, GPIO_OUTPUT_INACTIVE);
+    
     ret = gpio_pin_configure(gpiob, 3, GPIO_OUTPUT_INACTIVE);
     ret = gpio_pin_configure(gpioa, 4, GPIO_OUTPUT_INACTIVE);
-
     
-    
-    //gpio_pin_set_dt(&led_green,0);
-    //gpio_pin_set_dt(&led_red,0);
-    //gpio_pin_set_dt(&led_blue,0);
-    
+    gpio_pin_set_dt(&led_green,0);
+    gpio_pin_set_dt(&led_red,0);
 
     /* Thread Create: Read Ambient Sensors*/
     k_thread_create(&send_data_thread_data, send_data_stack_area,

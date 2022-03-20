@@ -269,8 +269,29 @@ struct histogram opc_read_histogram(uint8_t samples) {
     
     uint8_t r = 0;
     
-    struct histogram data[samples];
-    struct histogram result;
+    
+    struct histogram data, result;
+    
+    
+    
+    data.pm1  = 0;
+    data.pm25 = 0;
+    data.pm10 = 0;
+    data.sfr = 0;
+    data.period = 0;
+    data.temp_pressure = 0;
+    
+    result.pm1  = 0;
+    result.pm25 = 0;
+    result.pm10 = 0;
+    result.sfr = 0;
+    result.period = 0;
+    result.temp_pressure = 0;
+    
+    
+    
+    
+    
   
     for (uint8_t s=0; s<samples; s++) {
         LOG_INF("READING SAMPLE %d",s);
@@ -303,8 +324,8 @@ struct histogram opc_read_histogram(uint8_t samples) {
         LOG_HEXDUMP_INF(vals, 62, "Histogram: ");
 
 
-        data[s].period = calculate_float(vals[44], vals[45], vals[46], vals[47]);
-        data[s].sfr    = calculate_float(vals[36], vals[37], vals[38], vals[39]);
+        data.period = calculate_float(vals[44], vals[45], vals[46], vals[47]);
+        data.sfr    = calculate_float(vals[36], vals[37], vals[38], vals[39]);
 
         // If convert_to_conc = True, convert from raw data to concentration
 
@@ -315,49 +336,64 @@ struct histogram opc_read_histogram(uint8_t samples) {
             conv = 1.0;
         }
         else {
-            conv = data[s].sfr * data[s].period;
+            conv = data.sfr * data.period;
         }
 
         // Calculate all of the values!
-        data[s].bin0   = (double)to_16bit_int(vals[0], vals[1]) / conv;
-        data[s].bin1   = (double)to_16bit_int(vals[2], vals[3]) / conv;
-        data[s].bin2   = (double)to_16bit_int(vals[4], vals[5]) / conv;
-        data[s].bin3   = (double)to_16bit_int(vals[6], vals[7]) / conv;
-        data[s].bin4   = (double)to_16bit_int(vals[8], vals[9]) / conv;
-        data[s].bin5   = (double)to_16bit_int(vals[10], vals[11]) / conv;
-        data[s].bin6   = (double)to_16bit_int(vals[12], vals[13]) / conv;
-        data[s].bin7   = (double)to_16bit_int(vals[14], vals[15]) / conv;
-        data[s].bin8   = (double)to_16bit_int(vals[16], vals[17]) / conv;
-        data[s].bin9   = (double)to_16bit_int(vals[18], vals[19]) / conv;
-        data[s].bin10  = (double)to_16bit_int(vals[20], vals[21]) / conv;
-        data[s].bin11  = (double)to_16bit_int(vals[22], vals[23]) / conv;
-        data[s].bin12  = (double)to_16bit_int(vals[24], vals[25]) / conv;
-        data[s].bin13  = (double)to_16bit_int(vals[26], vals[27]) / conv;
-        data[s].bin14  = (double)to_16bit_int(vals[28], vals[29]) / conv;
-        data[s].bin15  = (double)to_16bit_int(vals[30], vals[31]) / conv;
+        data.bin0   = (double)to_16bit_int(vals[0], vals[1]) / conv;
+        data.bin1   = (double)to_16bit_int(vals[2], vals[3]) / conv;
+        data.bin2   = (double)to_16bit_int(vals[4], vals[5]) / conv;
+        data.bin3   = (double)to_16bit_int(vals[6], vals[7]) / conv;
+        data.bin4   = (double)to_16bit_int(vals[8], vals[9]) / conv;
+        data.bin5   = (double)to_16bit_int(vals[10], vals[11]) / conv;
+        data.bin6   = (double)to_16bit_int(vals[12], vals[13]) / conv;
+        data.bin7   = (double)to_16bit_int(vals[14], vals[15]) / conv;
+        data.bin8   = (double)to_16bit_int(vals[16], vals[17]) / conv;
+        data.bin9   = (double)to_16bit_int(vals[18], vals[19]) / conv;
+        data.bin10  = (double)to_16bit_int(vals[20], vals[21]) / conv;
+        data.bin11  = (double)to_16bit_int(vals[22], vals[23]) / conv;
+        data.bin12  = (double)to_16bit_int(vals[24], vals[25]) / conv;
+        data.bin13  = (double)to_16bit_int(vals[26], vals[27]) / conv;
+        data.bin14  = (double)to_16bit_int(vals[28], vals[29]) / conv;
+        data.bin15  = (double)to_16bit_int(vals[30], vals[31]) / conv;
 
-        data[s].bin1MToF = vals[32] / 3.0;
-        data[s].bin3MToF = vals[33] / 3.0;
-        data[s].bin5MToF = vals[34] / 3.0;
-        data[s].bin7MToF = vals[35] / 3.0;    
+        data.bin1MToF = vals[32] / 3.0;
+        data.bin3MToF = vals[33] / 3.0;
+        data.bin5MToF = vals[34] / 3.0;
+        data.bin7MToF = vals[35] / 3.0;    
 
-        data[s].temp_pressure = to_32bit_int(vals[40], vals[41], vals[42], vals[43]);
-        data[s].checksum = to_16bit_int(vals[48], vals[49]);
+        data.temp_pressure = to_32bit_int(vals[40], vals[41], vals[42], vals[43]);
+        data.checksum = to_16bit_int(vals[48], vals[49]);
 
-        data[s].pm1 =  calculate_float(vals[50], vals[51], vals[52], vals[53]);
-        data[s].pm25 = calculate_float(vals[54], vals[55], vals[56], vals[57]);
-        data[s].pm10 = calculate_float(vals[58], vals[59], vals[60], vals[61]);
-
+        data.pm1 =  calculate_float(vals[50], vals[51], vals[52], vals[53]);
+        data.pm25 = calculate_float(vals[54], vals[55], vals[56], vals[57]);
+        data.pm10 = calculate_float(vals[58], vals[59], vals[60], vals[61]);
+        
+        uint8_t testpm10[4];
+        testpm10[0] = vals[58];
+        testpm10[1] = vals[59];
+        testpm10[2] = vals[60];
+        testpm10[3] = vals[61];
+        
+        uint8_t testpm25[4];
+        testpm25[0] = vals[54];
+        testpm25[1] = vals[55];
+        testpm25[2] = vals[56];
+        testpm25[3] = vals[57];        
+        
+        LOG_HEXDUMP_INF(testpm10, 4, "PM10 Bytes: ");
+        LOG_HEXDUMP_INF(testpm25, 4, "PM25 Bytes: ");
+        
         char fperiod[40];
-        snprintfcb(fperiod, 40, "%0.2f", data[s].period);
+        snprintfcb(fperiod, 40, "%0.2f", data.period);
         char fpm1[40];
-        snprintfcb(fpm1, 40, "%0.2f", data[s].pm1);
+        snprintfcb(fpm1, 40, "%0.2f", data.pm1);
         char fpm25[40];
-        snprintfcb(fpm25, 40, "%0.2f", data[s].pm25);
+        snprintfcb(fpm25, 40, "%0.2f", data.pm25);
         char fpm10[40];
-        snprintfcb(fpm10, 40, "%0.2f", data[s].pm10);
+        snprintfcb(fpm10, 40, "%0.2f", data.pm10);
         char fflowrate[40];
-        snprintfcb(fflowrate, 40, "%0.2f", data[s].sfr);
+        snprintfcb(fflowrate, 40, "%0.2f", data.sfr);
 
         LOG_INF("Sampling Period: %s", fperiod);
         LOG_INF("Sample Flow Rate: %s",fflowrate);
@@ -365,20 +401,25 @@ struct histogram opc_read_histogram(uint8_t samples) {
         LOG_INF("PM2.5: %s", fpm25);
         LOG_INF("PM10: %s", fpm10);
         k_msleep(5000);
+        
+        result.pm1  = result.pm1 + data.pm1;
+        result.pm10 = result.pm10 + data.pm10;
+        result.pm25 = result.pm25 + data.pm25;
+        result.period = result.period + data.period;
+        result.sfr = result.sfr + data.sfr;
+        
     }
     
     LOG_INF("Calculating OPC data average");
     // Calculate Average
-    
-    for (int i=1; i<samples; i++) {
-        result.pm1 = result.pm1 + data[i].pm1;
-        result.pm25 = result.pm25 + data[i].pm25;
-        result.pm10 = result.pm10 + data[i].pm10;
-    }
-    
     result.pm1 = result.pm1 / samples;
     result.pm25 = result.pm25 / samples;
     result.pm10 = result.pm10 / samples;
+    result.period = result.period / samples;
+    result.sfr = result.sfr / samples;
+
+    
+
     
     LOG_INF("Returning OPC read result...");
     return result;

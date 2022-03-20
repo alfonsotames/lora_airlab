@@ -31,8 +31,7 @@ extern "C" {
 /* * * * * * * * * SD CARD Functions * * * * * * * * * */
 
  void init_and_mount_sdcard();
- //void save_data(char* data, char* type);
- void save_data();
+ void save_data(char* data, char* type);
  int lsdir(const char *path);
 
 #ifdef __cplusplus
