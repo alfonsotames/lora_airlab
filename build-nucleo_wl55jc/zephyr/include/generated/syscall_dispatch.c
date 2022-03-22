@@ -1293,10 +1293,6 @@ uintptr_t z_mrsh_zsock_setsockopt(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3
          uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
 
 __weak ALIAS_OF(handler_no_syscall)
-uintptr_t z_mrsh_zsock_getpeername(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
-         uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
-
-__weak ALIAS_OF(handler_no_syscall)
 uintptr_t z_mrsh_zsock_getsockname(uintptr_t arg1, uintptr_t arg2, uintptr_t arg3,
          uintptr_t arg4, uintptr_t arg5, uintptr_t arg6, void *ssf);
 
@@ -1750,7 +1746,6 @@ const _k_syscall_handler_t _k_syscall_table[K_SYSCALL_LIMIT] = {
 	[K_SYSCALL_ZSOCK_POLL] = z_mrsh_zsock_poll,
 	[K_SYSCALL_ZSOCK_GETSOCKOPT] = z_mrsh_zsock_getsockopt,
 	[K_SYSCALL_ZSOCK_SETSOCKOPT] = z_mrsh_zsock_setsockopt,
-	[K_SYSCALL_ZSOCK_GETPEERNAME] = z_mrsh_zsock_getpeername,
 	[K_SYSCALL_ZSOCK_GETSOCKNAME] = z_mrsh_zsock_getsockname,
 	[K_SYSCALL_ZSOCK_GETHOSTNAME] = z_mrsh_zsock_gethostname,
 	[K_SYSCALL_ZSOCK_INET_PTON] = z_mrsh_zsock_inet_pton,

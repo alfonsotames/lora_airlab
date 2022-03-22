@@ -166,7 +166,6 @@
 			};
 			dac_out1_pa10: dac_out1_pa10 {
 				pinmux = < 0x150 >;
-				phandle = < 0x16 >;
 			};
 			i2c1_scl_pa9: i2c1_scl_pa9 {
 				pinmux = < 0x124 >;
@@ -474,7 +473,6 @@
 			};
 			tim2_ch4_pb11: tim2_ch4_pb11 {
 				pinmux = < 0x361 >;
-				phandle = < 0x17 >;
 			};
 			tim16_ch1_pa6: tim16_ch1_pa6 {
 				pinmux = < 0xce >;
@@ -787,11 +785,9 @@
 			compatible = "st,stm32-dac";
 			reg = < 0x40007400 0x400 >;
 			clocks = < &rcc 0x2 0x20000000 >;
-			status = "okay";
+			status = "disabled";
 			label = "DAC_1";
 			#io-channel-cells = < 0x1 >;
-			pinctrl-0 = < &dac_out1_pa10 >;
-			pinctrl-names = "default";
 		};
 		timers1: timers@40012c00 {
 			compatible = "st,stm32-timers";
@@ -816,15 +812,13 @@
 			interrupts = < 0x1b 0x0 >;
 			interrupt-names = "global";
 			st,prescaler = < 0x0 >;
-			status = "okay";
+			status = "disabled";
 			label = "TIMERS_2";
-			pwm2: pwm {
+			pwm {
 				compatible = "st,stm32-pwm";
-				status = "okay";
+				status = "disabled";
 				label = "PWM_2";
 				#pwm-cells = < 0x3 >;
-				pinctrl-0 = < &tim2_ch4_pb11 >;
-				pinctrl-names = "default";
 			};
 		};
 		timers16: timers@40014400 {
@@ -938,7 +932,7 @@
 			compatible = "fixed-clock";
 			clock-frequency = < 0xf42400 >;
 			status = "okay";
-			phandle = < 0x1b >;
+			phandle = < 0x19 >;
 		};
 		clk_msi: clk-msi {
 			#clock-cells = < 0x0 >;
@@ -981,15 +975,15 @@
 		compatible = "gpio-leds";
 		blue_led_0: led_0 {
 			gpios = < &gpiob 0xf 0x0 >;
-			label = "User LED1";
+			label = "User LED1 BLUE";
 		};
 		green_led_1: led_1 {
 			gpios = < &gpiob 0x9 0x0 >;
-			label = "User LED2";
+			label = "User LED2 GREEN";
 		};
 		red_led_2: led_2 {
 			gpios = < &gpiob 0xb 0x0 >;
-			label = "User LED3";
+			label = "User LED3 RED";
 		};
 	};
 	gpio_keys {
@@ -1013,21 +1007,21 @@
 			power-state-name = "suspend-to-idle";
 			substate-id = < 0x1 >;
 			min-residency-us = < 0x64 >;
-			phandle = < 0x18 >;
+			phandle = < 0x16 >;
 		};
 		stop1: state1 {
 			compatible = "zephyr,power-state";
 			power-state-name = "suspend-to-idle";
 			substate-id = < 0x2 >;
 			min-residency-us = < 0x1f4 >;
-			phandle = < 0x19 >;
+			phandle = < 0x17 >;
 		};
 		stop2: state2 {
 			compatible = "zephyr,power-state";
 			power-state-name = "suspend-to-idle";
 			substate-id = < 0x3 >;
 			min-residency-us = < 0x384 >;
-			phandle = < 0x1a >;
+			phandle = < 0x18 >;
 		};
 	};
 };

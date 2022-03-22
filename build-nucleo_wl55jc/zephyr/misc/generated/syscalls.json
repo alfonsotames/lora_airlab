@@ -2255,13 +2255,6 @@
     ],
     [
         [
-            "int zsock_getpeername",
-            "int sock, struct sockaddr *addr,\n\t\t\t\tsocklen_t *addrlen"
-        ],
-        "socket.h"
-    ],
-    [
-        [
             "int zsock_getsockname",
             "int sock, struct sockaddr *addr,\n\t\t\t\tsocklen_t *addrlen"
         ],

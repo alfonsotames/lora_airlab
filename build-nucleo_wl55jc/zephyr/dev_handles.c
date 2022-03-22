@@ -35,7 +35,7 @@
  *   - /soc/pin-controller@48000000/gpio@48001c00
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_rcc_58000000[] = { DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 6, 3, 12, 9, 14, 4, 7, 13, 8, 10, 5, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_rcc_58000000[] = { DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 12, 3, 9, 14, 4, 7, 13, 5, 8, 10, 6, DEVICE_HANDLE_ENDS };
 
 /* 2 : /soc/interrupt-controller@58000800:
  * Direct Dependencies:
@@ -177,7 +177,7 @@ __devicehdl_DT_N_S_soc_S_spi_40003800[] = { 5, 1, DEVICE_HANDLE_SEP, DEVICE_HAND
  *   - /soc/pin-controller@48000000/gpio@48000000
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_spi_40013000[] = { 6, 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_spi_40013000[] = { 1, 6, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, DEVICE_HANDLE_ENDS };
 
 /* 15 : /soc/spi@58010000/radio@0:
  * Direct Dependencies:
@@ -208,4 +208,4 @@ __devicehdl_DT_N_S_soc_S_i2c_40005800_S_bme280_77[] = { 10, DEVICE_HANDLE_SEP, D
  *   - /soc/pin-controller@48000000/gpio@48000000
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_i2c_40005800_S_sht3xd_44[] = { 6, 10, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_i2c_40005800_S_sht3xd_44[] = { 10, 6, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, DEVICE_HANDLE_ENDS };

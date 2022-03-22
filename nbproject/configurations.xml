@@ -2,11 +2,13 @@
 <configurationDescriptor version="100">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="src" name="0">
+      <in>ambient_sensors.c</in>
+      <in>ambient_sensors.h</in>
       <in>file_system.c</in>
       <in>file_system.h</in>
+      <in>gas_sensors.c</in>
+      <in>gas_sensors.h</in>
       <in>global_devices.h</in>
-      <in>lora_system.c</in>
-      <in>lora_system.h</in>
       <in>main.c</in>
       <in>opc.c</in>
       <in>opc.h</in>
@@ -54,15 +56,19 @@
           </incDir>
         </cTool>
       </folder>
+      <item path="src/ambient_sensors.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/ambient_sensors.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/file_system.c" ex="false" tool="0" flavor2="0">
       </item>
       <item path="src/file_system.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="src/gas_sensors.c" ex="false" tool="0" flavor2="0">
+      </item>
+      <item path="src/gas_sensors.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/global_devices.h" ex="false" tool="3" flavor2="0">
-      </item>
-      <item path="src/lora_system.c" ex="false" tool="0" flavor2="0">
-      </item>
-      <item path="src/lora_system.h" ex="false" tool="3" flavor2="0">
       </item>
       <item path="src/main.c" ex="false" tool="0" flavor2="0">
       </item>

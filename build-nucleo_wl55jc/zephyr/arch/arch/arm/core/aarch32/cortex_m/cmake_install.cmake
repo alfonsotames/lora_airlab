@@ -1,4 +1,4 @@
-# Install script for directory: /Users/mufufu/zephyr/zephyr/arch/arm/core/aarch32/cortex_m
+# Install script for directory: /home/mufufu/zephyrproject/zephyr/arch/arm/core/aarch32/cortex_m
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,6 +34,6 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/mufufu/devel/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-objdump")
+  set(CMAKE_OBJDUMP "/usr/local/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump")
 endif()
 

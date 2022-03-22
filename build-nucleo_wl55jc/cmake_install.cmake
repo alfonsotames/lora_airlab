@@ -1,4 +1,4 @@
-# Install script for directory: /Users/mufufu/devel/lora_airlab
+# Install script for directory: /home/mufufu/proyectos/lora_airlab
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,12 +34,12 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/mufufu/devel/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-objdump")
+  set(CMAKE_OBJDUMP "/usr/local/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/cmake_install.cmake")
 endif()
 
 if(CMAKE_INSTALL_COMPONENT)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

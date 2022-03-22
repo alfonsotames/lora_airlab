@@ -304,7 +304,6 @@ __ramfunc_load_start = LOADADDR(.ramfunc);
  KEEP(*(.ARM.attributes))
  KEEP(*(.gnu.attributes))
  }
-   
 .last_section (NOLOAD) :
 {
 } > FLASH

@@ -1,4 +1,4 @@
-# Install script for directory: /Users/mufufu/zephyr/zephyr/drivers
+# Install script for directory: /home/mufufu/zephyrproject/zephyr/drivers
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,91 +34,91 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/mufufu/devel/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-objdump")
+  set(CMAKE_OBJDUMP "/usr/local/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/interrupt_controller/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/interrupt_controller/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/misc/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/misc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/pcie/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/pcie/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/disk/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/disk/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/usb/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/usb/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/usbc/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/usbc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/clock_control/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/clock_control/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/counter/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/counter/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/console/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/console/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/gpio/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/gpio/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/i2c/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/i2c/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/sensor/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/sensor/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/spi/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/spi/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/lora/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/lora/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/serial/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/serial/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/timer/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/timer/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/pinctrl/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/drivers/pinctrl/cmake_install.cmake")
 endif()
 

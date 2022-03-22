@@ -1,4 +1,4 @@
-# Install script for directory: /Users/mufufu/zephyr/zephyr/subsys
+# Install script for directory: /home/mufufu/zephyrproject/zephyr/subsys
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,96 +34,96 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/Users/mufufu/devel/gcc-arm-none-eabi-10-2020-q4-major/bin/arm-none-eabi-objdump")
+  set(CMAKE_OBJDUMP "/usr/local/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-objdump")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/debug/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/debug/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/logging/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/logging/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/lorawan/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/lorawan/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/disk/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/disk/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/fs/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/fs/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/ipc/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/ipc/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/mgmt/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/mgmt/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/random/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/random/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/storage/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/storage/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/fb/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/fb/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/portability/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/portability/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/pm/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/pm/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/stats/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/stats/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/task_wdt/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/task_wdt/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/testsuite/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/testsuite/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/tracing/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/tracing/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/canbus/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/canbus/cmake_install.cmake")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for the subdirectory.
-  include("/Users/mufufu/devel/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/modbus/cmake_install.cmake")
+  include("/home/mufufu/proyectos/lora_airlab/build-nucleo_wl55jc/zephyr/subsys/modbus/cmake_install.cmake")
 endif()
 

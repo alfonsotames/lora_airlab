@@ -423,31 +423,6 @@ static inline int zsock_setsockopt(int sock, int level, int optname, const void 
 #endif
 
 
-extern int z_impl_zsock_getpeername(int sock, struct sockaddr * addr, socklen_t * addrlen);
-
-__pinned_func
-static inline int zsock_getpeername(int sock, struct sockaddr * addr, socklen_t * addrlen)
-{
-#ifdef CONFIG_USERSPACE
-	if (z_syscall_trap()) {
-		union { uintptr_t x; int val; } parm0 = { .val = sock };
-		union { uintptr_t x; struct sockaddr * val; } parm1 = { .val = addr };
-		union { uintptr_t x; socklen_t * val; } parm2 = { .val = addrlen };
-		return (int) arch_syscall_invoke3(parm0.x, parm1.x, parm2.x, K_SYSCALL_ZSOCK_GETPEERNAME);
-	}
-#endif
-	compiler_barrier();
-	return z_impl_zsock_getpeername(sock, addr, addrlen);
-}
-
-#if (CONFIG_TRACING_SYSCALL == 1)
-#ifndef DISABLE_SYSCALL_TRACING
-
-#define zsock_getpeername(sock, addr, addrlen) ({ 	int retval; 	sys_port_trace_syscall_enter(K_SYSCALL_ZSOCK_GETPEERNAME, zsock_getpeername, sock, addr, addrlen); 	retval = zsock_getpeername(sock, addr, addrlen); 	sys_port_trace_syscall_exit(K_SYSCALL_ZSOCK_GETPEERNAME, zsock_getpeername, sock, addr, addrlen, retval); 	retval; })
-#endif
-#endif
-
-
 extern int z_impl_zsock_getsockname(int sock, struct sockaddr * addr, socklen_t * addrlen);
 
 __pinned_func

@@ -11,6 +11,10 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(opc);
 
+// How many samples to skip in result
+#define SKIP 2
+
+
 const struct device *spi;
 
 
@@ -33,7 +37,7 @@ void opc_release() {
     
     gpio_pin_set(gpiob,4,0);
     gpio_pin_set(gpiob,7,0);
-    gpio_pin_set(gpiob,6,0);    
+    //gpio_pin_set(gpiob,6,0);     // MISO (input line)
     gpio_pin_set(gpiob,5,0);
 }    
 void opc_init() {
@@ -163,7 +167,11 @@ void opc_start() {
         if (c > 20) {
                 LOG_INF("power cycle...");
                 gpio_pin_set(gpiob,3,0);
-                k_msleep(4000);
+                gpio_pin_set(gpiob,4,0);
+                gpio_pin_set(gpiob,7,0);
+                //gpio_pin_set(gpiob,6,0);     // MISO (input line)
+                gpio_pin_set(gpiob,5,0);
+                k_msleep(8000);
                 gpio_pin_set(gpiob,3,1);
                 c=0;
         }				
@@ -174,7 +182,7 @@ void opc_start() {
 }
 
 void opc_stop() {
-    LOG_INF("*** STARTING OPC ***");
+    LOG_INF("*** SHUTTING DOWN OPC ***");
     // Switch on the relay
     for (int t=3; t>0; t--) {
         LOG_INF("Switching the relay OFF in %d",t);
@@ -268,12 +276,9 @@ void opc_read_information_string() {
 struct histogram opc_read_histogram(uint8_t samples) {
     
     uint8_t r = 0;
-    
-    
+  
     struct histogram data, result;
-    
-    
-    
+
     data.pm1  = 0;
     data.pm25 = 0;
     data.pm10 = 0;
@@ -287,12 +292,7 @@ struct histogram opc_read_histogram(uint8_t samples) {
     result.sfr = 0;
     result.period = 0;
     result.temp_pressure = 0;
-    
-    
-    
-    
-    
-  
+
     for (uint8_t s=0; s<samples; s++) {
         LOG_INF("READING SAMPLE %d",s);
         r = opc_send_command(0x30);
@@ -311,13 +311,16 @@ struct histogram opc_read_histogram(uint8_t samples) {
             LOG_INF("Histogram %d is READY!!!!",s);
 
             gpio_pin_set(gpioa,4,0);
-            for (int i=0; i<61; i++) {
+            
+            k_usleep(6);
+            for (int i=0; i<62; i++) {
                 tx_buf[0] = 0xC0;
                 spi_transceive(spi, &spi_cfg, &tx, &rx);
                 //printk("val: %d",rx_buf[0]);
                 vals[i] = rx_buf[0];
 
             }
+            k_usleep(6);
             gpio_pin_set(gpioa,4,1);
 
         }
@@ -400,28 +403,28 @@ struct histogram opc_read_histogram(uint8_t samples) {
         LOG_INF("PM1: %s", fpm1);
         LOG_INF("PM2.5: %s", fpm25);
         LOG_INF("PM10: %s", fpm10);
+        
+        if (s > (SKIP-1)) {
+            result.pm1  = result.pm1 + data.pm1;
+            result.pm10 = result.pm10 + data.pm10;
+            result.pm25 = result.pm25 + data.pm25;
+            result.period = result.period + data.period;
+            result.sfr = result.sfr + data.sfr;
+        }
         k_msleep(5000);
-        
-        result.pm1  = result.pm1 + data.pm1;
-        result.pm10 = result.pm10 + data.pm10;
-        result.pm25 = result.pm25 + data.pm25;
-        result.period = result.period + data.period;
-        result.sfr = result.sfr + data.sfr;
-        
     }
     
-    LOG_INF("Calculating OPC data average");
+    //LOG_INF("Calculating OPC data average");
     // Calculate Average
-    result.pm1 = result.pm1 / samples;
-    result.pm25 = result.pm25 / samples;
-    result.pm10 = result.pm10 / samples;
-    result.period = result.period / samples;
-    result.sfr = result.sfr / samples;
-
-    
-
-    
+    float div = samples-SKIP;
+    //LOG_INF("Dividing %0.2f over %d",result.pm10, samples-SKIP);
+    result.pm1 = result.pm1 / div;
+    result.pm25 = result.pm25 / div;
+    result.pm10 = result.pm10 / div;
+    result.period = result.period / div;
+    result.sfr = result.sfr / div;
     LOG_INF("Returning OPC read result...");
+    
     return result;
 }
 

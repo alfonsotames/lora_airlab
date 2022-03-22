@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/cFiles/file.c to edit this template
  */
 
+#include <string.h>
 
 #include "file_system.h"
 #include "time_system.h"
@@ -89,27 +90,34 @@ static const char *disk_mount_pt = "/SD:";
      
     LOG_INF("Saving data...");
     
+    
+
+    
+    
     char fname[40];
     
     snprintfcb(fname, 40, "/SD:/%s.%s", get_date(), type);
-    
-    struct fs_file_t file;
+ 
 
-    fs_file_t_init(&file);
+        struct fs_file_t file;
+        fs_file_t_init(&file);
+        LOG_INF("Attemting to write to file: %s",fname);
+        int rc = fs_open(&file, fname, FS_O_CREATE | FS_O_APPEND | FS_O_RDWR);
+        if (rc < 0) {
+                LOG_ERR("FAIL: open file to write: %d", rc);
+        }
+        rc = fs_write(&file, data, strlen(data));
 
-    int rc = fs_open(&file, fname, FS_O_CREATE | FS_O_APPEND | FS_O_RDWR);
-    if (rc < 0) {
-            LOG_ERR("FAIL: open file to write: %d", rc);
-    }
-    rc = fs_write(&file, data, sizeof(data));
-    
-    if (rc < 0) {
-            LOG_ERR("FAIL: cannot write: %d\n", rc);
-    }
+        if (rc < 0) {
+                LOG_ERR("FAIL: cannot write: %d\n", rc);
+                k_msleep(500);
+        } else {
 
-    LOG_INF(" **** fs_write wrote %d bytes ****",rc);
+            LOG_INF(" **** fs_write wrote %d bytes ****",rc);
 
-    fs_close(&file);
+        }
+        fs_close(&file);
+
  
  }
 
