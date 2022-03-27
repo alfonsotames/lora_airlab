@@ -57,7 +57,7 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 #define DEFAULT_RADIO DT_LABEL(DEFAULT_RADIO_NODE)
 
 /* Customize based on network configuration */
-#define LORAWAN_DEV_EUI   { 0x00, 0x80, 0xE1, 0x15, 0x00, 0x0A, 0x93, 0xB8 }
+#define LORAWAN_DEV_EUI   { 0x00, 0x80, 0xE1, 0x15, 0x00, 0x0A, 0x8F, 0x43 }
 #define LORAWAN_JOIN_EUI  { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
 #define LORAWAN_APP_KEY   { 0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C }
 
@@ -108,6 +108,11 @@ extern void count_particles() {
     ///AMBIENT SENSORS
     /*      0 Humidiy   1 Temperature   2 pressure            */
     float amb_sensors[3];
+
+    amb_sensors[0] = 0;
+    amb_sensors[1] = 0;
+    amb_sensors[2] = 0;
+
     char text_data[200];
     struct histogram data;
     while(1) {
@@ -121,7 +126,7 @@ extern void count_particles() {
         opc_release();
         
         gpio_pin_set_dt(&led_red,0);
-        ambient_sensors_read(1, amb_sensors);
+        //ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%0.2f|%0.2f|%0.2f|%0.2f|"
                         "%0.2f|%0.2f|%0.2f|%0.2f\n",
                 get_formatted_time(),
@@ -156,13 +161,17 @@ extern void read_gas_and_ambient_sensors() {
     
     // AMBIENT SENSORS
     /*      0 Humidiy   1 Temperature   2 pressure            */
-    float amb_sensors[30];
+    float amb_sensors[3];
+    amb_sensors[0] = 0;
+    amb_sensors[1] = 0;
+    amb_sensors[2] = 0;
     char text_data[200];    
 
     while(1) {
         //LOG_INF("Reading gas sensors...");
+        //verificar con el otro sensor el lapso!!!!!!!!!!!
         gas_sensors_read(gs,5);
-        ambient_sensors_read(1, amb_sensors);
+        //ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%d|%d|%d|"
                 "%d|%d|%d|%d|%d|%0.2f|%0.2f|%0.2f\n",
                 get_formatted_time(),
@@ -179,6 +188,7 @@ extern void read_gas_and_ambient_sensors() {
                 amb_sensors[2]);                
         save_data(text_data, "gas");
         strcpy(gas_msg, text_data);
+        k_msleep(30000);
     }
 }
 
@@ -343,7 +353,7 @@ void main(void) {
     init_time_system();
     init_and_mount_sdcard();
     
-    
+    /*
     dev_sht3xd = get_sht3xd_device();
     if (dev_sht3xd == NULL) {
         return;
@@ -353,13 +363,13 @@ void main(void) {
     if (dev_bme280 == NULL) {
         return;
     }
-      
+    */  
     
     gas_sensors_init();
  
             
-    //LOG_INF("Date: %s",get_formatted_time());
-    
+    LOG_INF("Date: %s",get_formatted_time());
+
     
     gpioa = device_get_binding("GPIOA");
     gpiob = device_get_binding("GPIOB");

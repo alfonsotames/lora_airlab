@@ -13,6 +13,8 @@ LOG_MODULE_REGISTER(time_system);
 #include "time_system.h"
 
 
+const struct device *i2c2_dev;
+
 const struct device *dev_ds3231;
 
 
@@ -46,6 +48,21 @@ void init_time_system() {
     if (dev_ds3231 == NULL) {
         return;
     }
+
+    uint32_t i2c2_cfg = I2C_SPEED_SET(I2C_SPEED_FAST) | I2C_MODE_MASTER;
+
+    LOG_INF("Initializing I2C 2...");
+    i2c2_dev = device_get_binding("I2C_2");
+    if (!i2c2_dev) {
+        LOG_INF("I2C2: Device driver not found.");
+        return;
+    }
+
+    if (i2c_configure(i2c2_dev, i2c2_cfg)) {
+        LOG_ERR("I2C2 config failed");
+    } else {
+        LOG_INF("i2c2 configured...");
+    }    
     
 }
 
@@ -59,6 +76,8 @@ char* get_formatted_time() {
     int rc = counter_get_value(dev_ds3231, &now);
     if (rc < 0) {
         LOG_ERR("Can't get the counter value");
+    } else {
+        //LOG_INF("Counter returns: %d",now);
     }
     struct maxim_ds3231_syncpoint sp = {
         .rtc =
@@ -68,7 +87,7 @@ char* get_formatted_time() {
         },
         .syncclock = syncclock,
     };
-
+    //LOG_INF("Counter returns: %d, %d, %d",sp.rtc.tv_sec, sp.rtc.tv_nsec, syncclock);
     return format_time(sp.rtc.tv_sec, sp.rtc.tv_nsec);
 }
 char *format_time(time_t time, long nsec) {

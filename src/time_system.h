@@ -20,8 +20,9 @@ extern "C" {
 #include <zephyr.h>
 #include <device.h>
 #include <drivers/rtc/maxim_ds3231.h>
+#include <drivers/i2c.h>
 
-
+extern const struct device *i2c2_dev;
 
 // Time device DS3231 Precision Clock    
 extern const struct device *dev_ds3231;

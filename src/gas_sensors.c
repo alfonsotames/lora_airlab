@@ -30,7 +30,7 @@ void gas_sensors_init() {
     if (i2c_configure(i2c3_dev, i2c3_cfg)) {
         LOG_ERR("I2C3 config failed");
     } else {
-        LOG_ERR("i2c3 configured...");
+        LOG_INF("i2c3 configured...");
     }
 
 }
