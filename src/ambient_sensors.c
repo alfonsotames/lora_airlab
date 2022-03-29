@@ -66,6 +66,8 @@ void ambient_sensors_read(uint8_t samples, float *ambientsensor) {
     float sum[3];
 
     for(int i=0; i<samples; i++) {
+        int rc=0;
+        /*
         k_msleep(20);
         int rc = sensor_sample_fetch(dev_sht3xd);
         k_msleep(20);
@@ -80,7 +82,7 @@ void ambient_sensors_read(uint8_t samples, float *ambientsensor) {
             printf("SHT3XD: failed: %d\n", rc);
             return;
         }
-
+         */
         k_msleep(20);
         rc = sensor_sample_fetch(dev_bme280);
         k_msleep(20);
@@ -88,6 +90,14 @@ void ambient_sensors_read(uint8_t samples, float *ambientsensor) {
         if (rc == 0) {
             rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_PRESS, &press);
         }
+
+        if (rc == 0) {
+            rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_AMBIENT_TEMP, &temp);
+        }
+        if (rc == 0) {
+            rc = sensor_channel_get(dev_bme280, SENSOR_CHAN_HUMIDITY, &hum);
+        }        
+        
         if (rc != 0) {
             printf("BME280: failed: %d\n", rc);
             return;

@@ -126,7 +126,7 @@ extern void count_particles() {
         opc_release();
         
         gpio_pin_set_dt(&led_red,0);
-        //ambient_sensors_read(1, amb_sensors);
+        ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%0.2f|%0.2f|%0.2f|%0.2f|"
                         "%0.2f|%0.2f|%0.2f|%0.2f\n",
                 get_formatted_time(),
@@ -171,7 +171,7 @@ extern void read_gas_and_ambient_sensors() {
         //LOG_INF("Reading gas sensors...");
         //verificar con el otro sensor el lapso!!!!!!!!!!!
         gas_sensors_read(gs,5);
-        //ambient_sensors_read(1, amb_sensors);
+        ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%d|%d|%d|"
                 "%d|%d|%d|%d|%d|%0.2f|%0.2f|%0.2f\n",
                 get_formatted_time(),
@@ -358,12 +358,13 @@ void main(void) {
     if (dev_sht3xd == NULL) {
         return;
     }
-
+     */
+    
     dev_bme280 = get_bme280_device();
     if (dev_bme280 == NULL) {
         return;
     }
-    */  
+     
     
     gas_sensors_init();
  

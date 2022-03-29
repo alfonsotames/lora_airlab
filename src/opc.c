@@ -265,7 +265,7 @@ void opc_read_information_string() {
         }
         gpio_pin_set(gpioa,4,1);        
     }
-    LOG_HEXDUMP_INF(vals, 61, "Information String: ");    
+    //LOG_HEXDUMP_INF(vals, 61, "Information String: ");    
     
 }
 
@@ -324,7 +324,7 @@ struct histogram opc_read_histogram(uint8_t samples) {
             gpio_pin_set(gpioa,4,1);
 
         }
-        LOG_HEXDUMP_INF(vals, 62, "Histogram: ");
+        //LOG_HEXDUMP_INF(vals, 62, "Histogram: ");
 
 
         data.period = calculate_float(vals[44], vals[45], vals[46], vals[47]);
@@ -384,8 +384,8 @@ struct histogram opc_read_histogram(uint8_t samples) {
         testpm25[2] = vals[56];
         testpm25[3] = vals[57];        
         
-        LOG_HEXDUMP_INF(testpm10, 4, "PM10 Bytes: ");
-        LOG_HEXDUMP_INF(testpm25, 4, "PM25 Bytes: ");
+        //LOG_HEXDUMP_INF(testpm10, 4, "PM10 Bytes: ");
+        //LOG_HEXDUMP_INF(testpm25, 4, "PM25 Bytes: ");
         
         char fperiod[40];
         snprintfcb(fperiod, 40, "%0.2f", data.period);
