@@ -35,7 +35,7 @@
  *   - /soc/pin-controller@48000000/gpio@48001c00
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_rcc_58000000[] = { DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 9, 14, 4, 7, 13, 5, 8, 10, 6, 12, 3, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_rcc_58000000[] = { DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 12, 3, 9, 14, 4, 7, 13, 5, 8, 10, 6, DEVICE_HANDLE_ENDS };
 
 /* 2 : /soc/interrupt-controller@58000800:
  * Direct Dependencies:
@@ -87,7 +87,7 @@ __devicehdl_DT_N_S_soc_S_pin_controller_48000000_S_gpio_48000400[] = { 1, DEVICE
  *   - /soc/i2c@40005800/sht3xd@44
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_pin_controller_48000000_S_gpio_48000000[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 18, 14, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_pin_controller_48000000_S_gpio_48000000[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 14, 18, DEVICE_HANDLE_ENDS };
 
 /* 7 : /soc/serial@40008000:
  * Direct Dependencies:
@@ -133,7 +133,7 @@ __devicehdl_DT_N_S_soc_S_i2c_40005c00[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_
  *   - /soc/i2c@40005800/sht3xd@44
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_i2c_40005800[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 18, 17, 11, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_i2c_40005800[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 17, 11, 18, DEVICE_HANDLE_ENDS };
 
 /* 11 : /soc/i2c@40005800/ds3231@68:
  * Direct Dependencies:
@@ -167,7 +167,7 @@ __devicehdl_DT_N_S_soc_S_spi_58010000[] = { 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_
  *   - /soc/spi@40003800/sdhc@0
  */
 const device_handle_t __aligned(2) __attribute__((__section__(".__device_handles_pass2")))
-__devicehdl_DT_N_S_soc_S_spi_40003800[] = { 1, 5, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 16, DEVICE_HANDLE_ENDS };
+__devicehdl_DT_N_S_soc_S_spi_40003800[] = { 5, 1, DEVICE_HANDLE_SEP, DEVICE_HANDLE_SEP, 16, DEVICE_HANDLE_ENDS };
 
 /* 14 : /soc/spi@40013000:
  * Direct Dependencies:

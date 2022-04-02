@@ -96,8 +96,8 @@ static const char *disk_mount_pt = "/SD:";
     
     char fname[40];
     
-    snprintfcb(fname, 40, "/SD:/%s.%s", get_date(), type);
- 
+    //snprintfcb(fname, 40, "/SD:/%s.%s", get_date(), type);
+    snprintfcb(fname, 40, "/SD:/0000.%s", type);
 
         struct fs_file_t file;
         fs_file_t_init(&file);

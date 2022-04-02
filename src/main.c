@@ -57,7 +57,8 @@ BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay),
 #define DEFAULT_RADIO DT_LABEL(DEFAULT_RADIO_NODE)
 
 /* Customize based on network configuration */
-#define LORAWAN_DEV_EUI   { 0x00, 0x80, 0xE1, 0x15, 0x00, 0x0A, 0x8F, 0x43 }
+
+#define LORAWAN_DEV_EUI   { 0x00, 0x80, 0xE1, 0x15, 0x05, 0x00, 0xDD, 0x1F }
 #define LORAWAN_JOIN_EUI  { 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01, 0x01 }
 #define LORAWAN_APP_KEY   { 0x2B, 0x7E, 0x15, 0x16, 0x28, 0xAE, 0xD2, 0xA6, 0xAB, 0xF7, 0x15, 0x88, 0x09, 0xCF, 0x4F, 0x3C }
 
@@ -129,7 +130,8 @@ extern void count_particles() {
         ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%0.2f|%0.2f|%0.2f|%0.2f|"
                         "%0.2f|%0.2f|%0.2f|%0.2f\n",
-                get_formatted_time(),
+                //get_formatted_time(),
+                "0000-00-00 00:00:00",
                 data.period,
                 data.sfr,
                 data.pm1,
@@ -174,7 +176,8 @@ extern void read_gas_and_ambient_sensors() {
         ambient_sensors_read(1, amb_sensors);
         snprintfcb(text_data, 200, "%s|%d|%d|%d|"
                 "%d|%d|%d|%d|%d|%0.2f|%0.2f|%0.2f\n",
-                get_formatted_time(),
+                //get_formatted_time(),
+                "0000-00-00 00:00:00",
                 gs[0],
                 gs[1],
                 gs[2],
@@ -350,7 +353,7 @@ void main(void) {
     // System Initialitations
     
     
-    init_time_system();
+    //init_time_system();
     init_and_mount_sdcard();
     
     /*
@@ -369,7 +372,7 @@ void main(void) {
     gas_sensors_init();
  
             
-    LOG_INF("Date: %s",get_formatted_time());
+    //LOG_INF("Date: %s",get_formatted_time());
 
     
     gpioa = device_get_binding("GPIOA");
